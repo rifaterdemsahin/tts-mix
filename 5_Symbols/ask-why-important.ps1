@@ -11,14 +11,7 @@
 #   App: powershell.exe
 #   Arguments: -ExecutionPolicy Bypass -File "C:\projects\tts-mix\5_Symbols\ask-why-important.ps1"
 
-$PipelineConfig = @{
-    Name         = "ask-why-important"
-    Title        = "Why Is This Important?"
-    FilePrefix   = "why"
-    StageEmoji   = "🧠"
-    StageTitle   = "Asking xAI Grok: Why is this important?"
-    SystemPrompt = "You are a concise, insightful analyst. Keep responses brief (2-3 sentences max) and suitable for text-to-speech reading."
-    UserPromptTemplate = @"
+$UserPrompt = @"
 The user copied this text:
 
 ---
@@ -27,6 +20,15 @@ The user copied this text:
 
 Explain in 2-3 concise sentences why this is important. Be insightful and direct. Respond in the same language as the text.
 "@
+
+$PipelineConfig = @{
+    Name         = "ask-why-important"
+    Title        = "Why Is This Important?"
+    FilePrefix   = "why"
+    StageEmoji   = "🧠"
+    StageTitle   = "Asking xAI Grok: Why is this important?"
+    SystemPrompt = "You are a concise, insightful analyst. Keep responses brief (2-3 sentences max) and suitable for text-to-speech reading."
+    UserPromptTemplate = $UserPrompt
     Temperature    = 0.7
     MaxTokens      = 300
     BoxBorderColor = "DarkCyan"

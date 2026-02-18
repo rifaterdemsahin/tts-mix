@@ -11,14 +11,7 @@
 #   App: powershell.exe
 #   Arguments: -ExecutionPolicy Bypass -File "C:\projects\tts-mix\5_Symbols\storytell.ps1"
 
-$PipelineConfig = @{
-    Name         = "storytell"
-    Title        = "Story"
-    FilePrefix   = "story"
-    StageEmoji   = "📖"
-    StageTitle   = "Asking xAI Grok: Tell a story about this"
-    SystemPrompt = "You are a gifted storyteller. Transform any topic into a compelling short narrative (3-5 sentences) that sounds great when read aloud."
-    UserPromptTemplate = @"
+$UserPrompt = @"
 The user copied this text:
 
 ---
@@ -27,6 +20,15 @@ The user copied this text:
 
 Turn this into a short, vivid story in 3-5 sentences. Use narrative style with a beginning, middle, and end. Make it engaging and easy to listen to. Respond in the same language as the text.
 "@
+
+$PipelineConfig = @{
+    Name         = "storytell"
+    Title        = "Story"
+    FilePrefix   = "story"
+    StageEmoji   = "📖"
+    StageTitle   = "Asking xAI Grok: Tell a story about this"
+    SystemPrompt = "You are a gifted storyteller. Transform any topic into a compelling short narrative (3-5 sentences) that sounds great when read aloud."
+    UserPromptTemplate = $UserPrompt
     Temperature    = 0.9
     MaxTokens      = 400
     BoxBorderColor = "DarkMagenta"

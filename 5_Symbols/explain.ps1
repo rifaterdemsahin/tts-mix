@@ -11,14 +11,7 @@
 #   App: powershell.exe
 #   Arguments: -ExecutionPolicy Bypass -File "C:\projects\tts-mix\5_Symbols\explain.ps1"
 
-$PipelineConfig = @{
-    Name         = "explain"
-    Title        = "Explanation"
-    FilePrefix   = "explain"
-    StageEmoji   = "🧠"
-    StageTitle   = "Asking xAI Grok: Explain this"
-    SystemPrompt = "You are a clear, concise explainer. Keep responses brief (2-3 sentences max) and suitable for text-to-speech reading."
-    UserPromptTemplate = @"
+$UserPrompt = @"
 The user copied this text:
 
 ---
@@ -27,6 +20,15 @@ The user copied this text:
 
 Explain this in 2-3 concise sentences. Be clear and direct. Respond in the same language as the text.
 "@
+
+$PipelineConfig = @{
+    Name         = "explain"
+    Title        = "Explanation"
+    FilePrefix   = "explain"
+    StageEmoji   = "🧠"
+    StageTitle   = "Asking xAI Grok: Explain this"
+    SystemPrompt = "You are a clear, concise explainer. Keep responses brief (2-3 sentences max) and suitable for text-to-speech reading."
+    UserPromptTemplate = $UserPrompt
     Temperature    = 0.7
     MaxTokens      = 300
     BoxBorderColor = "DarkCyan"

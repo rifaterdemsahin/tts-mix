@@ -153,7 +153,7 @@ function Write-StatusFail {
 function Write-StatusWarn {
     param([string]$Text)
     Write-Log "WARN: $Text" -Level WARN
-    Write-Host "  ⚠️  $Text" -ForegroundColor Yellow
+    Write-Host "  ⚠  $Text" -ForegroundColor Yellow
 }
 
 function Write-WrappedBox {

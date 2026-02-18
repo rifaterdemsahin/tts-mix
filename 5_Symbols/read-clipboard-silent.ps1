@@ -1,6 +1,7 @@
 # Read Clipboard Text-to-Speech (Silent Version)
 #
-# This script reads text from the clipboard and speaks it using fal.ai TTS
+# This script reads text from the clipboard and speaks it using ElevenLabs TTS
+# Priority: ElevenLabs (primary), fal.ai (fallback), Kokoro (local fallback)
 # No popup messages - silent execution
 # Designed for Stream Deck button integration
 #
@@ -53,15 +54,23 @@ if (-not (Test-Path $AppPath)) {
     exit 1
 }
 
-# Execute Python script silently
+# Execute Python script silently and track elapsed time
+$Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 try {
     Start-Process -FilePath $PythonExe `
                   -ArgumentList $AppPath `
                   -WorkingDirectory $ScriptDir `
                   -WindowStyle Hidden `
                   -Wait
+    $Stopwatch.Stop()
+    $Elapsed = $Stopwatch.Elapsed
+
+    # Log elapsed time (red text if running in a visible console)
+    Write-Host "`n[TTS COMPLETE] Elapsed: $($Elapsed.ToString('mm\:ss\.ff'))" -ForegroundColor Red
 }
 catch {
-    # Exit silently on error
+    $Stopwatch.Stop()
+    $Elapsed = $Stopwatch.Elapsed
+    Write-Host "`n[TTS ERROR] Elapsed: $($Elapsed.ToString('mm\:ss\.ff'))" -ForegroundColor Red
     exit 1
 }

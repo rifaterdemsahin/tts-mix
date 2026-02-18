@@ -182,18 +182,26 @@ def speak_cloud(text):
         save_path.write_bytes(audio_bytes)
         print(f"💾 Saved: {save_path}")
 
-        # Play the saved file
-        from pydub import AudioSegment
-        from pydub.playback import play as pydub_play
-        audio_segment = AudioSegment.from_file(str(save_path), format="mp3")
-        pydub_play(audio_segment)
+        # Play the saved file using Windows Media Player COM (no ffmpeg needed)
+        import subprocess
+        subprocess.Popen(
+            ["powershell", "-WindowStyle", "Hidden", "-Command",
+             f'Add-Type -AssemblyName presentationCore; '
+             f'$player = New-Object System.Windows.Media.MediaPlayer; '
+             f'$player.Open([Uri]"{save_path}"); '
+             f'Start-Sleep -Milliseconds 500; '
+             f'$player.Play(); '
+             f'Start-Sleep -Milliseconds ([math]::Ceiling($player.NaturalDuration.TimeSpan.TotalMilliseconds) + 1000); '
+             f'$player.Close()'],
+            creationflags=0x08000000  # CREATE_NO_WINDOW
+        ).wait()
         return True
     except Exception as e:
         print(f"ElevenLabs TTS Failed: {e}")
         return False
 
 def main():
-    """Main application logic - tries fal.ai first, then ElevenLabs, then Kokoro."""
+    """Main application logic - tries ElevenLabs first, then fal.ai, then Kokoro."""
     # Get text from clipboard
     content = pyperclip.paste().strip()
     if not content:
@@ -211,32 +219,32 @@ def main():
     print(f"└{'─' * 58}┘")
     print(f"   📝 {word_count} words, {char_count} chars (~{est_reading_min:.1f} min estimated)\n")
 
-    # Priority: 1. fal.ai (fast & quality), 2. ElevenLabs (quality), 3. Kokoro (local)
+    # Priority: 1. ElevenLabs (quality), 2. fal.ai (fast), 3. Kokoro (local)
     success = False
     overall_start = time.time()
     start_time = overall_start
 
-    # Try fal.ai first
-    if FAL_KEY:
+    # Try ElevenLabs first (primary provider)
+    if ELEVENLABS_API_KEY:
         print("=" * 60)
-        print("🟡 STARTING TTS — fal.ai (dia-tts)")
-        print(f"   ⏱️  Started at {time.strftime('%H:%M:%S')}")
-        print("=" * 60)
-        success = speak_fal(content)
-        if success:
-            elapsed = time.time() - start_time
-            print(f"\n🟢 SENT — Audio delivered in {elapsed:.1f}s")
-
-    # Fallback to ElevenLabs
-    if not success and ELEVENLABS_API_KEY:
-        start_time = time.time()
-        print("\n" + "=" * 60)
-        print("🟡 STARTING TTS — ElevenLabs")
+        print("🟡 STARTING TTS — ElevenLabs (Primary)")
         print(f"   Voice: {VOICE_ID}")
         print(f"   Model: {MODEL_ID}")
         print(f"   ⏱️  Started at {time.strftime('%H:%M:%S')}")
         print("=" * 60)
         success = speak_cloud(content)
+        if success:
+            elapsed = time.time() - start_time
+            print(f"\n🟢 SENT — Audio delivered in {elapsed:.1f}s")
+
+    # Fallback to fal.ai
+    if not success and FAL_KEY:
+        start_time = time.time()
+        print("\n" + "=" * 60)
+        print("🟡 STARTING TTS — fal.ai (dia-tts)")
+        print(f"   ⏱️  Started at {time.strftime('%H:%M:%S')}")
+        print("=" * 60)
+        success = speak_fal(content)
         if success:
             elapsed = time.time() - start_time
             print(f"\n🟢 SENT — Audio delivered in {elapsed:.1f}s")
@@ -258,8 +266,8 @@ def main():
         print("\n" + "=" * 60)
         print("❌ ERROR: All TTS methods failed")
         print("=" * 60)
-        print("1. For fal.ai: Set FAL_KEY in .env file")
-        print("2. For ElevenLabs: Set ELEVENLABS_API_KEY in .env file")
+        print("1. For ElevenLabs: Set ELEVENLABS_API_KEY in .env file")
+        print("2. For fal.ai: Set FAL_KEY in .env file")
         print("3. For Kokoro: Use Python 3.11/3.12 (not 3.14)")
         sys.exit(1)
 

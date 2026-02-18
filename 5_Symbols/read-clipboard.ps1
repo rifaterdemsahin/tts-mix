@@ -1,6 +1,7 @@
 # Read Clipboard Text-to-Speech
 #
-# This script reads text from the clipboard and speaks it using fal.ai TTS
+# This script reads text from the clipboard and speaks it using ElevenLabs TTS
+# Priority: ElevenLabs (primary), fal.ai (fallback), Kokoro (local fallback)
 # Designed for Stream Deck button integration
 #
 # Usage from Stream Deck:
@@ -73,27 +74,37 @@ if (-not (Test-Path $AppPath)) {
     exit 1
 }
 
-# Execute Python script
+# Execute Python script and track elapsed time
+$Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 try {
     & $PythonExe $AppPath
+    $Stopwatch.Stop()
+    $Elapsed = $Stopwatch.Elapsed
 
     # Check exit code
     if ($LASTEXITCODE -ne 0) {
-        # Show error notification
+        # Show error notification with elapsed time in red
+        Write-Host "`n[TTS FAILED] Elapsed: $($Elapsed.ToString('mm\:ss\.ff'))" -ForegroundColor Red
         Add-Type -AssemblyName System.Windows.Forms
         [System.Windows.Forms.MessageBox]::Show(
-            "TTS failed. Check your API key configuration in .env file.`n`nRun 'python 7_Testing_known/test_fal_quick.py' to diagnose.",
+            "TTS failed after $($Elapsed.TotalSeconds.ToString('F1'))s.`n`nCheck your API key configuration in .env file.`nRun 'python 7_Testing_known/test_elevenlabs.py' to diagnose.",
             "TTS Error",
             [System.Windows.Forms.MessageBoxButtons]::OK,
             [System.Windows.Forms.MessageBoxIcon]::Warning
         )
+    } else {
+        # Show elapsed time in red
+        Write-Host "`n[TTS COMPLETE] Elapsed: $($Elapsed.ToString('mm\:ss\.ff'))" -ForegroundColor Red
     }
 }
 catch {
-    # Show error notification with exception details
+    $Stopwatch.Stop()
+    $Elapsed = $Stopwatch.Elapsed
+    # Show error notification with exception details and elapsed time
+    Write-Host "`n[TTS ERROR] Elapsed: $($Elapsed.ToString('mm\:ss\.ff'))" -ForegroundColor Red
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.MessageBox]::Show(
-        "Error running TTS: $($_.Exception.Message)",
+        "Error running TTS after $($Elapsed.TotalSeconds.ToString('F1'))s: $($_.Exception.Message)",
         "TTS Error",
         [System.Windows.Forms.MessageBoxButtons]::OK,
         [System.Windows.Forms.MessageBoxIcon]::Error

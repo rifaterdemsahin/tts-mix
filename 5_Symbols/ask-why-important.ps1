@@ -31,6 +31,7 @@ $VOICE_ID = if ($EnvVars["VOICE_ID"]) { $EnvVars["VOICE_ID"] } else { "JBFqnCBsd
 $MODEL_ID = if ($EnvVars["MODEL_ID"]) { $EnvVars["MODEL_ID"] } else { "eleven_flash_v2_5" }
 
 $DownloadsDir = [Environment]::GetFolderPath("UserProfile") + "\Downloads"
+$SecondBrainDir = "F:\secondbrain_v4\secondbrain"
 $Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
 # ─── Helper: Print Stage ─────────────────────────────────
@@ -171,6 +172,16 @@ try {
     Write-Host "  └$('─' * 56)┘" -ForegroundColor DarkCyan
     Write-Detail "Grok time:" "$($GrokElapsed.TotalSeconds.ToString('F1'))s" Blue
     Write-Detail "Tokens:" "$($Response.usage.total_tokens)" Blue
+
+    # Save text to secondbrain
+    if (Test-Path $SecondBrainDir) {
+        $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+        $TextPath = Join-Path $SecondBrainDir "why_$Timestamp.md"
+        $TextContent = "# Why Is This Important?`n`n## Source`n`n$ClipboardText`n`n## Analysis (Grok)`n`n$GrokAnswer`n"
+        [System.IO.File]::WriteAllText($TextPath, $TextContent, [System.Text.UTF8Encoding]::new($true))
+        Write-Detail "Saved text:" $TextPath Blue
+    }
+
     Write-StatusOk "Grok answered"
 }
 catch {
@@ -214,6 +225,14 @@ try {
     Write-Detail "Saved:" $SavePath Green
     Write-Detail "Size:" "$([math]::Round($FileSize / 1024, 1)) KB" Green
     Write-Detail "TTS time:" "$($TTSElapsed.TotalSeconds.ToString('F1'))s" Green
+
+    # Copy audio to secondbrain
+    if (Test-Path $SecondBrainDir) {
+        $SBSavePath = Join-Path $SecondBrainDir "why_$Timestamp.mp3"
+        Copy-Item -Path $SavePath -Destination $SBSavePath -Force
+        Write-Detail "SecondBrain:" $SBSavePath Green
+    }
+
     Write-StatusOk "Audio generated"
 }
 catch {

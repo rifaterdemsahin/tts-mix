@@ -54,19 +54,19 @@ Message: Your subscription has a failed or incomplete payment
    ```
    GROQ_API_KEY=gsk_your_actual_groq_key_here
    ```
-3. **Test**: `python app.py`
+3. **Test**: `python 5_Symbols/app.py`
 
 ### Option B: Fix ElevenLabs Payment
 1. **Go to** https://elevenlabs.io/usage
 2. **Complete payment** for subscription
-3. **Test**: `python app.py`
+3. **Test**: `python 5_Symbols/app.py`
 
 ### Option C: Use Python 3.11/3.12 for Kokoro
 1. **Install Python 3.11**: `winget install Python.Python.3.11`
 2. **Create venv**: `py -3.11 -m venv venv`
 3. **Activate**: `.\venv\Scripts\Activate.ps1`
 4. **Install packages**: `pip install kokoro sounddevice pyperclip`
-5. **Test**: `python app.py`
+5. **Test**: `python 5_Symbols/app.py`
 
 ---
 
@@ -83,7 +83,7 @@ Message: Your subscription has a failed or incomplete payment
    ```
    GROQ_API_KEY=gsk_your_key_here
    ```
-7. Run: `python app.py`
+7. Run: `python 5_Symbols/app.py`
 
 **Groq Benefits**:
 - Free tier available
@@ -120,12 +120,12 @@ You have two options:
 
 | File | Status | Purpose |
 |------|--------|---------|
-| app.py | Updated | 3-tier TTS (Groq→ElevenLabs→Kokoro) |
+| 5_Symbols/app.py | Updated | 3-tier TTS (Groq→ElevenLabs→Kokoro) |
 | .env | Updated | Has xAI key (need Groq key) |
 | .gitignore | Created | Protects .env from git |
 | .env.sample | Needs update | Add Groq config |
-| test_elevenlabs.py | Created | Tests ElevenLabs API |
-| STREAMDECK_SETUP.md | Created | Stream Deck guide |
+| 7_Testing_known/test_elevenlabs.py | Created | Tests ElevenLabs API |
+| 2_Environment/STREAMDECK_SETUP.md | Created | Stream Deck guide |
 
 ---
 
@@ -138,7 +138,7 @@ You have two options:
 GROQ_API_KEY=gsk_your_actual_key
 
 # 3. Test
-python app.py
+python 5_Symbols/app.py
 ```
 **Time**: 5 minutes
 **Result**: Working TTS with natural voice
@@ -148,7 +148,7 @@ python app.py
 # 1. Go to elevenlabs.io/usage
 # 2. Complete payment
 # 3. Test
-python app.py
+python 5_Symbols/app.py
 ```
 **Time**: Depends on payment processing
 **Result**: High-quality natural voice with emotions
@@ -167,7 +167,7 @@ Let me know if you want this
 **Test with text from clipboard**:
 ```powershell
 echo "Hello from TTS" | clip
-python app.py
+python 5_Symbols/app.py
 ```
 
 **Quick Groq test** (once you have key):
@@ -191,7 +191,7 @@ response = client.audio.speech.create(
 1. Sign up at https://console.groq.com/
 2. Get API key (free tier available)
 3. Update GROQ_API_KEY in .env
-4. Run `python app.py`
+4. Run `python 5_Symbols/app.py`
 
 Then you'll have working natural TTS from your Stream Deck button!
 

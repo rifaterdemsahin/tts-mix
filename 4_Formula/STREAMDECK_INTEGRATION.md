@@ -36,7 +36,7 @@ First, make sure your TTS system is working:
 ```powershell
 # Test the TTS system
 cd C:\projects\tts-mix
-python test_fal_quick.py
+python 7_Testing_known/test_fal_quick.py
 ```
 
 You should see: `✅ FAL.AI TTS TEST PASSED`
@@ -59,7 +59,7 @@ C:\Python314\python.exe
 
 **Arguments**:
 ```
-C:\projects\tts-mix\app.py
+C:\projects\tts-mix\5_Symbols\app.py
 ```
 *(Adjust path to match where you cloned this repo)*
 
@@ -84,7 +84,7 @@ C:\projects\tts-mix\app.py
 
 **Configuration**:
 - **App/File**: `C:\Python314\python.exe`
-- **Arguments**: `C:\projects\tts-mix\app.py`
+- **Arguments**: `C:\projects\tts-mix\5_Symbols\app.py`
 - **Working Directory**: Leave empty (optional)
 
 **Pros**:
@@ -108,7 +108,7 @@ C:\projects\tts-mix\app.py
 # Silently runs TTS without showing console window
 
 Start-Process -FilePath "C:\Python314\python.exe" `
-    -ArgumentList "C:\projects\tts-mix\app.py" `
+  -ArgumentList "C:\projects\tts-mix\5_Symbols\app.py" `
     -WorkingDirectory "C:\projects\tts-mix" `
     -WindowStyle Hidden
 ```
@@ -144,7 +144,7 @@ Save to: `C:\projects\tts-mix\read-clipboard.ps1`
 ```batch
 @echo off
 cd /d C:\projects\tts-mix
-start /min python app.py
+start /min python 5_Symbols\app.py
 exit
 ```
 
@@ -183,7 +183,7 @@ pip install pyinstaller
 ```powershell
 cd C:\projects\tts-mix
 
-pyinstaller --onefile --noconsole --name "ReadClipboard" app.py
+pyinstaller --onefile --noconsole --name "ReadClipboard" 5_Symbols\app.py
 ```
 
 This creates: `dist\ReadClipboard.exe`
@@ -236,9 +236,9 @@ Create multiple Stream Deck buttons for different use cases:
 
 | Button | Function | Arguments |
 |--------|----------|-----------|
-| 🔊 Read Text | Read clipboard | `app.py` |
+| 🔊 Read Text | Read clipboard | `5_Symbols/app.py` |
 | ⏹️ Stop Reading | Kill Python | `taskkill /F /IM python.exe` |
-| 🔄 Reload Config | Restart with new settings | `app.py` |
+| 🔄 Reload Config | Restart with new settings | `5_Symbols/app.py` |
 
 ### Hotkey Integration
 
@@ -247,13 +247,13 @@ Don't have Stream Deck? Use built-in hotkey:
 **Windows PowerToys** (Free):
 1. Install [PowerToys](https://learn.microsoft.com/en-us/windows/powertoys/)
 2. Open PowerToys Keyboard Manager
-3. Create shortcut: `Ctrl+Alt+S` → Run `python app.py`
+3. Create shortcut: `Ctrl+Alt+S` → Run `python 5_Symbols/app.py`
 
 **AutoHotkey** (Free):
 ```ahk
 ; read-text.ahk
 ^!s::  ; Ctrl+Alt+S
-    Run, python.exe C:\projects\tts-mix\app.py
+  Run, python.exe C:\projects\tts-mix\5_Symbols\app.py
 Return
 ```
 
@@ -282,13 +282,13 @@ Update your script to include working directory:
 **PowerShell**:
 ```powershell
 Set-Location C:\projects\tts-mix
-python app.py
+python 5_Symbols/app.py
 ```
 
 **Batch**:
 ```batch
 cd /d C:\projects\tts-mix
-python app.py
+python 5_Symbols\app.py
 ```
 
 ### Issue: Console window appears briefly
@@ -305,7 +305,7 @@ python app.py
 1. **Test manually**:
    ```powershell
    cd C:\projects\tts-mix
-   python app.py
+  python 5_Symbols/app.py
    ```
 
 2. **Check clipboard**:
@@ -336,7 +336,7 @@ FAL_KEY=be93d3a7-e5f9-4fd0-9ce8-4a76420a0e60:9dc0b83d7769ef175a821241230e3954
 **Solution**: Change default audio device in Windows:
 1. Right-click speaker icon → Sound settings
 2. Choose correct output device
-3. Or modify `app.py` to specify device
+3. Or modify `5_Symbols/app.py` to specify device
 
 ---
 
@@ -392,7 +392,7 @@ Run once at startup, use hotkey instead of launching new process each time.
 
 ### Reduce Audio Latency
 
-Modify `app.py` to use streaming (advanced):
+Modify `5_Symbols/app.py` to use streaming (advanced):
 ```python
 # Instead of downloading full audio then playing,
 # stream audio chunks as they arrive
@@ -455,7 +455,7 @@ Modify `app.py` to use streaming (advanced):
    ```json
    {
      "command-runner.commands": {
-       "Read Selected Text": "python C:\\projects\\tts-mix\\app.py"
+       "Read Selected Text": "python C:\\projects\\tts-mix\\5_Symbols\\app.py"
      }
    }
    ```
@@ -545,9 +545,9 @@ Create different buttons for different TTS engines:
 ✅ Share your setup with team members
 
 **Need Help?**
-- Check `SETUP_SUMMARY.md` for TTS configuration
-- Run `python test_fal_quick.py` to verify setup
-- See `TROUBLESHOOTING.md` for common issues
+- Check `2_Environment/SETUP_SUMMARY.md` for TTS configuration
+- Run `python 7_Testing_known/test_fal_quick.py` to verify setup
+- See `6_Semblance/TROUBLESHOOTING.md` for common issues
 
 ---
 
@@ -560,16 +560,16 @@ fal.ai supports multiple languages. To add language selection:
 `read-english.ps1`:
 ```powershell
 $env:TTS_LANGUAGE = "en"
-python C:\projects\tts-mix\app.py
+python C:\projects\tts-mix\5_Symbols\app.py
 ```
 
 `read-spanish.ps1`:
 ```powershell
 $env:TTS_LANGUAGE = "es"
-python C:\projects\tts-mix\app.py
+python C:\projects\tts-mix\5_Symbols\app.py
 ```
 
-Modify `app.py` to use `TTS_LANGUAGE` environment variable.
+Modify `5_Symbols/app.py` to use `TTS_LANGUAGE` environment variable.
 
 ---
 

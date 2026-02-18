@@ -160,7 +160,7 @@ sudo apt-get install libportaudio2
 
 ## Quick Diagnostic Script
 
-Create a file called `test_setup.py` to diagnose your setup:
+Create a file called `7_Testing_known/test_setup.py` to diagnose your setup:
 
 ```python
 import sys
@@ -249,7 +249,7 @@ if __name__ == "__main__":
 
 Run this script to identify missing components:
 ```bash
-python test_setup.py
+python 7_Testing_known/test_setup.py
 ```
 
 ## Step-by-Step Setup Guide for Windows
@@ -270,12 +270,12 @@ python test_setup.py
 
 4. **Test Your Setup**
    ```powershell
-   python test_setup.py
+   python 7_Testing_known/test_setup.py
    ```
 
 5. **Run Your TTS Application**
    ```powershell
-   python app.py
+   python 5_Symbols/app.py
    ```
 
 ## Common Resolution Steps
@@ -310,7 +310,7 @@ If you're still experiencing problems:
 
 ## Related Documentation
 
-- [mix-strategy.md](mix-strategy.md) - Hybrid TTS implementation guide
+- [mix-strategy.md](../1_Real_Unknown/mix-strategy.md) - Hybrid TTS implementation guide
 - [Kokoro GitHub](https://github.com/remixer-dec/kokoro-82m) - Official Kokoro repository
 - [ElevenLabs API Docs](https://elevenlabs.io/docs) - Cloud TTS documentation
 

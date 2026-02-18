@@ -5,6 +5,7 @@ Tests each engine individually with "Hello World" message.
 
 import os
 import sys
+from pathlib import Path
 
 # Set UTF-8 encoding for Windows console
 if sys.platform == 'win32':
@@ -13,7 +14,8 @@ if sys.platform == 'win32':
 
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+    load_dotenv(PROJECT_ROOT / ".env")
 except ImportError:
     print("Warning: python-dotenv not installed")
 
@@ -265,7 +267,7 @@ def main():
             if passed:
                 print(f"  • {engine}")
 
-        print("\nYou can use app.py for clipboard-to-speech workflow.")
+        print("\nYou can use 5_Symbols/app.py for clipboard-to-speech workflow.")
     else:
         print("\n⚠ No TTS engines are working")
         print("\nNext steps:")
@@ -273,7 +275,7 @@ def main():
         print("2. Fix ElevenLabs payment: https://elevenlabs.io/usage")
         print("3. Or use Python 3.11/3.12 for Kokoro")
 
-    print("\nSee SETUP_SUMMARY.md for detailed setup instructions.")
+    print("\nSee 2_Environment/SETUP_SUMMARY.md for detailed setup instructions.")
     print()
 
 if __name__ == "__main__":

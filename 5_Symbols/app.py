@@ -5,7 +5,7 @@ Priority: fal.ai first (fast & quality), ElevenLabs second (quality), Kokoro fal
 
 Usage:
 1. Copy text to clipboard
-2. Run: python app.py
+2. Run: python 5_Symbols/app.py
 3. Trigger from Stream Deck button for quick access
 """
 
@@ -17,7 +17,8 @@ from pathlib import Path
 # Load environment variables from .env file
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    project_root = Path(__file__).resolve().parent.parent
+    load_dotenv(project_root / ".env")
 except ImportError:
     print("Warning: python-dotenv not installed. Install with: pip install python-dotenv")
     print("Using environment variables or defaults...")
@@ -197,7 +198,7 @@ if __name__ == "__main__":
         sys.exit(0)
     except Exception as e:
         print(f"Unexpected error: {e}")
-        print("\nRun 'python test_setup.py' to diagnose your setup")
-        print("See TROUBLESHOOTING.md for detailed solutions")
+        print("\nRun 'python 7_Testing_known/test_setup.py' to diagnose your setup")
+        print("See 6_Semblance/TROUBLESHOOTING.md for detailed solutions")
         sys.exit(1)
 

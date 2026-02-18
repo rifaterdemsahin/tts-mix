@@ -37,7 +37,7 @@ USE_CLOUD_FIRST=true
 ```powershell
 # Copy some text to clipboard (Ctrl+C)
 # Then run:
-python app.py
+python 5_Symbols/app.py
 ```
 
 You should hear your text spoken with natural voice!
@@ -50,7 +50,7 @@ You should hear your text spoken with natural voice!
 2. **Drag "System > Open"** to a button
 3. **Configure**:
    - **App/File**: `C:\Python314\python.exe`
-   - **Arguments**: `"C:\projects\tts-mix\app.py"`
+    - **Arguments**: `"C:\projects\tts-mix\5_Symbols\app.py"`
    - **Title**: "Speak Clipboard"
    - **Icon**: Choose microphone or speaker icon
 
@@ -60,7 +60,7 @@ You should hear your text spoken with natural voice!
 ```powershell
 # speak.ps1
 Set-Location "C:\projects\tts-mix"
-& "C:\Python314\python.exe" "app.py"
+& "C:\Python314\python.exe" "5_Symbols\app.py"
 ```
 
 2. **Stream Deck Configuration**:
@@ -75,7 +75,7 @@ Set-Location "C:\projects\tts-mix"
 ```batch
 @echo off
 cd /d C:\projects\tts-mix
-C:\Python314\python.exe app.py
+C:\Python314\python.exe 5_Symbols\app.py
 pause
 ```
 
@@ -130,21 +130,21 @@ Create different buttons for different voices:
 ```powershell
 # speak_male.ps1
 $env:VOICE_ID="JBFqnCBsd6RMkjVDRZzb"
-& python app.py
+& python 5_Symbols/app.py
 ```
 
 **Button 2: Female Voice (Rachel)**
 ```powershell
 # speak_female.ps1
 $env:VOICE_ID="21m00Tcm4TlvDq8ikWAM"
-& python app.py
+& python 5_Symbols/app.py
 ```
 
 **Button 3: British Accent (Charlotte)**
 ```powershell
 # speak_british.ps1
 $env:VOICE_ID="XB0fDUnXU5powFXDhCwa"
-& python app.py
+& python 5_Symbols/app.py
 ```
 
 ### Popular ElevenLabs Voice IDs
@@ -162,7 +162,7 @@ Find more at: https://elevenlabs.io/voice-library
 
 ### Speed Control
 
-Edit `app.py` to add speed parameter:
+Edit `5_Symbols/app.py` to add speed parameter:
 ```python
 audio = client.text_to_speech.convert(
     text=text,
@@ -184,8 +184,8 @@ audio = client.text_to_speech.convert(
 
 **Check:**
 1. Python path correct: `where python`
-2. App path correct: `C:\projects\tts-mix\app.py` exists
-3. Test manually first: `python app.py`
+2. App path correct: `C:\projects\tts-mix\5_Symbols\app.py` exists
+3. Test manually first: `python 5_Symbols/app.py`
 
 ### "API key not set" error
 
@@ -205,14 +205,14 @@ audio = client.text_to_speech.convert(
 
 **Fix:**
 1. Check volume is up
-2. Test: `python test_simple.py` (should hear beep)
+2. Test: `python 7_Testing_known/test_simple.py` (should hear beep)
 3. Verify speaker is default device
 
 ### Slow response
 
 **Options:**
 1. Use `MODEL_ID=eleven_flash_v2_5` (fastest)
-2. Pre-load by running once: `python app.py` (keeps imports cached)
+2. Pre-load by running once: `python 5_Symbols/app.py` (keeps imports cached)
 3. Consider espeak-ng for instant (robotic) feedback
 
 ---
@@ -283,7 +283,7 @@ Stop-Process -Name "python" -Force
 
 **Test Setup**:
 ```powershell
-python C:\projects\tts-mix\test_simple.py
+python C:\projects\tts-mix\7_Testing_known\test_simple.py
 ```
 
 **Usage Stats**:
@@ -301,7 +301,7 @@ If no Stream Deck, use AutoHotkey:
 ; speak_clipboard.ahk
 ^!s::  ; Ctrl+Alt+S
 {
-    Run, C:\Python314\python.exe "C:\projects\tts-mix\app.py"
+    Run, C:\Python314\python.exe "C:\projects\tts-mix\5_Symbols\app.py"
 }
 ```
 
@@ -312,7 +312,7 @@ Install AutoHotkey from https://www.autohotkey.com/
 ## Integration with Other Apps
 
 ### VS Code:
-Use task or keyboard shortcut to trigger `python app.py`
+Use task or keyboard shortcut to trigger `python 5_Symbols/app.py`
 
 ### Browser:
 Use browser extension to copy selected text, then trigger button
@@ -341,7 +341,7 @@ while True:
 ```powershell
 # Faster subsequent calls
 python -c "import elevenlabs; from dotenv import load_dotenv"
-python app.py
+python 5_Symbols/app.py
 ```
 
 3. **Use fastest model**:
@@ -372,17 +372,17 @@ MODEL_ID=eleven_flash_v2_5  # Lowest latency
 ## Quick Reference
 
 ### File Locations:
-- **App**: `C:\projects\tts-mix\app.py`
+- **App**: `C:\projects\tts-mix\5_Symbols\app.py`
 - **Config**: `C:\projects\tts-mix\.env`
 - **Python**: `C:\Python314\python.exe` (adjust to your path)
 
 ### Commands:
 ```powershell
 # Run app
-python app.py
+python 5_Symbols/app.py
 
 # Test setup
-python test_simple.py
+python 7_Testing_known/test_simple.py
 
 # Check API key
 cat .env | Select-String "ELEVENLABS_API_KEY"

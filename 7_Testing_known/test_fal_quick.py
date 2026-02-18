@@ -3,6 +3,7 @@ Quick test of fal.ai TTS - generates audio but doesn't play it
 """
 import os
 import sys
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Set UTF-8 encoding for Windows console
@@ -10,7 +11,8 @@ if sys.platform == 'win32':
     os.system('chcp 65001 >nul 2>&1')
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
-load_dotenv()
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / ".env")
 
 FAL_KEY = os.getenv("FAL_KEY", "")
 TEST_MESSAGE = "Hello World! This is a test of text to speech."

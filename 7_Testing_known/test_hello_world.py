@@ -58,7 +58,7 @@ def test_kokoro_hello_world():
         print("\nPossible issues:")
         print("1. espeak-ng not installed (required for phoneme processing)")
         print("2. No audio output device available")
-        print("3. Check TROUBLESHOOTING.md for detailed solutions")
+        print("3. Check 6_Semblance/TROUBLESHOOTING.md for detailed solutions")
         return False
 
 if __name__ == "__main__":

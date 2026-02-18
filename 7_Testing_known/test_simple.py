@@ -108,8 +108,8 @@ if __name__ == "__main__":
         print()
         print("Next steps:")
         print("1. Install espeak-ng manually (see above)")
-        print("2. Run 'python test_setup.py' for full diagnostic")
-        print("3. Try 'python app.py' to test Kokoro TTS")
+        print("2. Run 'python 7_Testing_known/test_setup.py' for full diagnostic")
+        print("3. Try 'python 5_Symbols/app.py' to test Kokoro TTS")
         sys.exit(0)
     else:
         print("AUDIO TEST FAILED: Check your audio setup")

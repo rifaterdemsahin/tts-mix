@@ -5,7 +5,7 @@ This script tests your Text-to-Speech setup and identifies missing components.
 Run this before using the TTS application to ensure all dependencies are installed.
 
 Usage:
-    python test_setup.py
+    python 7_Testing_known/test_setup.py
 """
 
 import sys
@@ -136,5 +136,5 @@ if __name__ == "__main__":
     print("1. Install any missing dependencies listed above")
     print("2. Restart your terminal/PowerShell")
     print("3. Run this test again to verify")
-    print("4. Check TROUBLESHOOTING.md for detailed solutions")
+    print("4. Check 6_Semblance/TROUBLESHOOTING.md for detailed solutions")
 

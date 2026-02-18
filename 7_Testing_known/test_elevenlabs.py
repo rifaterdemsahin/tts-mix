@@ -3,10 +3,12 @@ Quick test of ElevenLabs API configuration
 """
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load .env
-load_dotenv()
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / ".env")
 
 # Check configuration
 api_key = os.getenv("ELEVENLABS_API_KEY")
@@ -43,7 +45,7 @@ try:
     print(f"Success! Generated {len(audio_data)} bytes of audio")
     print()
     print("Your ElevenLabs setup is working!")
-    print("You can now use: python app.py")
+    print("You can now use: python 5_Symbols/app.py")
 
 except Exception as e:
     print(f"ERROR: {e}")

@@ -1,15 +1,15 @@
-﻿# Ask Why Important — xAI (Grok) + ElevenLabs TTS Pipeline
+# Sanity Check — xAI (Grok) + ElevenLabs TTS Pipeline
 #
 # Pipeline:
 #   1. Read clipboard text
-#   2. Send to xAI Grok API: "Why is this important?"
+#   2. Send to xAI Grok API: "Does this make sense / is this sane?"
 #   3. Convert Grok's answer to speech via ElevenLabs
 #   4. Play audio
 #
 # Usage from Stream Deck:
 #   Action: System > Open
 #   App: powershell.exe
-#   Arguments: -ExecutionPolicy Bypass -File "C:\projects\tts-mix\5_Symbols\ask-why-important.ps1"
+#   Arguments: -ExecutionPolicy Bypass -File "C:\projects\tts-mix\5_Symbols\sanity-check.ps1"
 
 # ─── Load .env ───────────────────────────────────────────
 # Force UTF-8 for all output and web requests
@@ -155,7 +155,7 @@ Write-Detail "Model:" $MODEL_ID Magenta
 Write-StatusOk "API keys validated"
 
 # ─── STAGE 3: Ask xAI (Grok) ─────────────────────────────
-Write-Stage "🧠" "STAGE 3 — Asking xAI Grok: Why is this important?" Blue
+Write-Stage "🧠" "STAGE 3 — Asking xAI Grok: Sanity Check" Blue
 
 $GrokStart = [System.Diagnostics.Stopwatch]::StartNew()
 
@@ -166,16 +166,16 @@ The user copied this text:
 $ClipboardText
 ---
 
-Explain in 2-3 concise sentences why this is important. Be insightful and direct. Respond in the same language as the text.
+Perform a sanity check on this. Does it make sense? Is the logic sound? Are there any obvious errors, contradictions, or red flags? Respond in 2-3 concise sentences. Be direct and honest. Respond in the same language as the text.
 "@
 
 $Body = @{
     model    = "grok-3-mini-fast"
     messages = @(
-        @{ role = "system"; content = "You are a concise, insightful analyst. Keep responses brief (2-3 sentences max) and suitable for text-to-speech reading." }
+        @{ role = "system"; content = "You are a sharp, critical thinker performing sanity checks. Keep responses brief (2-3 sentences max) and suitable for text-to-speech reading." }
         @{ role = "user"; content = $Prompt }
     )
-    temperature = 0.7
+    temperature = 0.5
     max_tokens  = 300
 } | ConvertTo-Json -Depth 5
 
@@ -202,8 +202,8 @@ try {
     # Save text to secondbrain
     if (Test-Path $SecondBrainDir) {
         $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-        $TextPath = Join-Path $SecondBrainDir "why_$Timestamp.md"
-        $TextContent = "# Why Is This Important?`n`n## Source`n`n$ClipboardText`n`n## Analysis (Grok)`n`n$GrokAnswer`n"
+        $TextPath = Join-Path $SecondBrainDir "sanity_$Timestamp.md"
+        $TextContent = "# Sanity Check`n`n## Source`n`n$ClipboardText`n`n## Analysis (Grok)`n`n$GrokAnswer`n"
         [System.IO.File]::WriteAllText($TextPath, $TextContent, [System.Text.UTF8Encoding]::new($true))
         Write-Detail "📝 Obsidian:" $TextPath Blue
         $script:SavedFiles += $TextPath
@@ -226,10 +226,10 @@ if (-not $GrokAnswer -and $OPENROUTER_API_KEY) {
     $ORBody = @{
         model    = "google/gemini-2.0-flash-001"
         messages = @(
-            @{ role = "system"; content = "You are a concise, insightful analyst. Keep responses brief (2-3 sentences max) and suitable for text-to-speech reading." }
+            @{ role = "system"; content = "You are a sharp, critical thinker performing sanity checks. Keep responses brief (2-3 sentences max) and suitable for text-to-speech reading." }
             @{ role = "user"; content = $Prompt }
         )
-        temperature = 0.7
+        temperature = 0.5
         max_tokens  = 300
     } | ConvertTo-Json -Depth 5
 
@@ -256,8 +256,8 @@ if (-not $GrokAnswer -and $OPENROUTER_API_KEY) {
         # Save text to secondbrain
         if (Test-Path $SecondBrainDir) {
             $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-            $TextPath = Join-Path $SecondBrainDir "why_$Timestamp.md"
-            $TextContent = "# Why Is This Important?`n`n## Source`n`n$ClipboardText`n`n## Analysis (OpenRouter)`n`n$GrokAnswer`n"
+            $TextPath = Join-Path $SecondBrainDir "sanity_$Timestamp.md"
+            $TextContent = "# Sanity Check`n`n## Source`n`n$ClipboardText`n`n## Analysis (OpenRouter)`n`n$GrokAnswer`n"
             [System.IO.File]::WriteAllText($TextPath, $TextContent, [System.Text.UTF8Encoding]::new($true))
             Write-Detail "📝 Obsidian:" $TextPath DarkYellow
             $script:SavedFiles += $TextPath
@@ -299,7 +299,7 @@ $TTSHeaders = @{
 try {
     Write-Host "     ⏳ Generating speech..." -ForegroundColor DarkGreen
     $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    $SavePath = Join-Path $DownloadsDir "tts_grok_$Timestamp.mp3"
+    $SavePath = Join-Path $DownloadsDir "tts_sanity_$Timestamp.mp3"
 
     $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($TTSBody)
     Invoke-WebRequest -Uri "https://api.elevenlabs.io/v1/text-to-speech/$VOICE_ID" `
@@ -320,7 +320,7 @@ try {
 
     # Copy audio to secondbrain
     if (Test-Path $SecondBrainDir) {
-        $SBSavePath = Join-Path $SecondBrainDir "why_$Timestamp.mp3"
+        $SBSavePath = Join-Path $SecondBrainDir "sanity_$Timestamp.mp3"
         Copy-Item -Path $SavePath -Destination $SBSavePath -Force
         Write-Detail "📝 Obsidian:" $SBSavePath Green
         $script:SavedFiles += $SBSavePath

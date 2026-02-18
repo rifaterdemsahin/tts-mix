@@ -131,3 +131,4 @@ if __name__ == "__main__":
     print("2. Restart your terminal/PowerShell")
     print("3. Run this test again to verify")
     print("4. Check TROUBLESHOOTING.md for detailed solutions")
+

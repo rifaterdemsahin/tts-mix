@@ -54,7 +54,7 @@ kokoro-tts "Hello world" -v af_heart -o output.wav
 
 ### Prerequisites (for Options 2 & 3)
 
-- Python 3.10+ — [python.org](https://python.org)
+- Python 3.10+ — [python.org](https://www.python.org)
 - Git — [git-scm.com](https://git-scm.com)
 - (Optional) CUDA for GPU acceleration
 

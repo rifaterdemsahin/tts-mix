@@ -1,7 +1,7 @@
 """
 TTS Application - Clipboard to Speech
-Reads text from clipboard and speaks it using ElevenLabs (cloud) or Kokoro (local).
-Priority: ElevenLabs first for best quality, then fallback to local.
+Reads text from clipboard and speaks it using Groq, ElevenLabs, or Kokoro.
+Priority: Groq first (fast), ElevenLabs second (quality), Kokoro fallback (local).
 
 Usage:
 1. Copy text to clipboard
@@ -23,10 +23,58 @@ except ImportError:
     print("Using environment variables or defaults...")
 
 # --- CONFIGURATION FROM .ENV ---
-ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "YOUR_API_KEY_HERE")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_VOICE = os.getenv("GROQ_VOICE", "troy")  # troy, austin, etc.
+GROQ_MODEL = os.getenv("GROQ_MODEL", "canopylabs/orpheus-v1-english")
+
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 VOICE_ID = os.getenv("VOICE_ID", "JBFqnCBsd6RMkjVDRZzb")  # Default: Charlie
 MODEL_ID = os.getenv("MODEL_ID", "eleven_flash_v2_5")
-USE_CLOUD_FIRST = os.getenv("USE_CLOUD_FIRST", "true").lower() == "true"
+
+def speak_groq(text):
+    """
+    Use Groq cloud TTS to speak the text (fast and free).
+    Returns True on success, False on failure.
+    """
+    try:
+        from groq import Groq
+        import sounddevice as sd
+        import numpy as np
+        from io import BytesIO
+        import wave
+
+        if not GROQ_API_KEY:
+            print("Groq API key not set, skipping...")
+            return False
+
+        client = Groq(api_key=GROQ_API_KEY)
+
+        # Generate TTS audio
+        response = client.audio.speech.create(
+            model=GROQ_MODEL,
+            voice=GROQ_VOICE,
+            input=text
+        )
+
+        # Save to BytesIO buffer
+        audio_buffer = BytesIO()
+        for chunk in response.iter_bytes():
+            audio_buffer.write(chunk)
+
+        # Read WAV from buffer
+        audio_buffer.seek(0)
+        with wave.open(audio_buffer, 'rb') as wf:
+            sample_rate = wf.getframerate()
+            audio_data = np.frombuffer(wf.readframes(wf.getnframes()), dtype=np.int16)
+
+        # Play audio
+        sd.play(audio_data, sample_rate)
+        sd.wait()
+        return True
+
+    except Exception as e:
+        print(f"Groq TTS Failed: {e}")
+        return False
 
 def speak_local(text):
     """
@@ -78,7 +126,7 @@ def speak_cloud(text):
         return False
 
 def main():
-    """Main application logic - prioritizes ElevenLabs for best quality."""
+    """Main application logic - tries Groq first, then ElevenLabs, then Kokoro."""
     # Get text from clipboard
     content = pyperclip.paste().strip()
     if not content:
@@ -89,28 +137,29 @@ def main():
     preview = content[:100] + "..." if len(content) > 100 else content
     print(f"\nSpeaking: {preview}\n")
 
-    # Try cloud first (ElevenLabs - best quality), then fallback to local
+    # Priority: 1. Groq (fast), 2. ElevenLabs (quality), 3. Kokoro (local)
     success = False
 
-    if USE_CLOUD_FIRST:
-        print("Using ElevenLabs cloud TTS (natural voice with emotions)...")
+    # Try Groq first
+    if GROQ_API_KEY:
+        print("Trying Groq TTS (fast and free)...")
+        success = speak_groq(content)
+
+    # Fallback to ElevenLabs
+    if not success and ELEVENLABS_API_KEY:
+        print("\nTrying ElevenLabs TTS (natural voice with emotions)...")
         success = speak_cloud(content)
 
-        if not success:
-            print("\nFalling back to local TTS (Kokoro)...")
-            success = speak_local(content)
-    else:
-        print("Attempting local TTS (Kokoro)...")
+    # Fallback to Kokoro
+    if not success:
+        print("\nTrying local TTS (Kokoro)...")
         success = speak_local(content)
-
-        if not success:
-            print("\nFalling back to ElevenLabs...")
-            success = speak_cloud(content)
 
     if not success:
         print("\nERROR: All TTS methods failed")
-        print("1. For ElevenLabs: Set API key in .env file")
-        print("2. For Kokoro: Use Python 3.11/3.12 (not 3.14)")
+        print("1. For Groq: Set GROQ_API_KEY in .env file")
+        print("2. For ElevenLabs: Set ELEVENLABS_API_KEY in .env file")
+        print("3. For Kokoro: Use Python 3.11/3.12 (not 3.14)")
         sys.exit(1)
 
     print("\n✓ Speech completed successfully!")

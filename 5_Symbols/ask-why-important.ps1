@@ -65,6 +65,8 @@ Write-Stage "📋" "STAGE 1 — Reading Clipboard" Cyan
 $ClipboardText = Get-Clipboard -ErrorAction SilentlyContinue
 if (-not $ClipboardText) {
     Write-StatusFail "Clipboard is empty! Copy some text first."
+    Write-Host "`nPress Enter to close..." -ForegroundColor Red
+    Read-Host
     exit 1
 }
 
@@ -93,12 +95,16 @@ Write-Stage "🔑" "STAGE 2 — Checking API Keys" Magenta
 
 if (-not $XAI_API_KEY) {
     Write-StatusFail "XAI_API_KEY not set in .env"
+    Write-Host "`nPress Enter to close..." -ForegroundColor Red
+    Read-Host
     exit 1
 }
 Write-Detail "xAI Key:" "$($XAI_API_KEY.Substring(0,8))...$($XAI_API_KEY.Substring($XAI_API_KEY.Length-6))" Magenta
 
 if (-not $ELEVENLABS_API_KEY) {
     Write-StatusFail "ELEVENLABS_API_KEY not set in .env"
+    Write-Host "`nPress Enter to close..." -ForegroundColor Red
+    Read-Host
     exit 1
 }
 Write-Detail "ElevenLabs:" "$($ELEVENLABS_API_KEY.Substring(0,8))...$($ELEVENLABS_API_KEY.Substring($ELEVENLABS_API_KEY.Length-6))" Magenta
@@ -187,6 +193,8 @@ try {
 catch {
     $GrokStart.Stop()
     Write-StatusFail "xAI API call failed: $($_.Exception.Message)"
+    Write-Host "`nPress Enter to close..." -ForegroundColor Red
+    Read-Host
     exit 1
 }
 
@@ -238,6 +246,8 @@ try {
 catch {
     $TTSStart.Stop()
     Write-StatusFail "ElevenLabs TTS failed: $($_.Exception.Message)"
+    Write-Host "`nPress Enter to close..." -ForegroundColor Red
+    Read-Host
     exit 1
 }
 
@@ -282,3 +292,5 @@ Write-Detail "Total time:" "$($TotalElapsed.ToString('mm\:ss\.ff'))" White
 Write-Host ""
 Write-Host "  [TOTAL: $($TotalElapsed.TotalSeconds.ToString('F1'))s]" -ForegroundColor Red
 Write-Host ""
+Write-Host "Press Enter to close..." -ForegroundColor DarkGray
+Read-Host

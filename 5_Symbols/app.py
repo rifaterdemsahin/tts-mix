@@ -13,7 +13,12 @@ import pyperclip
 import os
 import sys
 import time
+import threading
 from pathlib import Path
+from datetime import datetime
+
+# Downloads folder for saving audio files
+DOWNLOADS_DIR = Path.home() / "Downloads"
 
 # Load environment variables from .env file
 try:
@@ -74,6 +79,12 @@ def speak_fal(text):
         response = httpx.get(audio_url)
         response.raise_for_status()
 
+        # Save audio to Downloads folder
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        save_path = DOWNLOADS_DIR / f"tts_fal_{timestamp}.mp3"
+        save_path.write_bytes(response.content)
+        print(f"💾 Saved: {save_path}")
+
         # Load audio from bytes
         audio_buffer = BytesIO(response.content)
         audio_buffer.seek(0)
@@ -121,9 +132,20 @@ def speak_local(text):
         pipeline = KPipeline(lang_code='a') 
         generator = pipeline(text, voice='af_bella', speed=1, split_pattern=r'\n+')
         
+        import numpy as np
+        all_audio = []
         for i, (gs, ps, audio) in enumerate(generator):
+            all_audio.append(audio)
             sd.play(audio, 24000)
             sd.wait()
+
+        # Save combined audio to Downloads folder
+        import scipy.io.wavfile as wavfile
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        save_path = DOWNLOADS_DIR / f"tts_kokoro_{timestamp}.wav"
+        combined = np.concatenate(all_audio)
+        wavfile.write(str(save_path), 24000, (combined * 32767).astype(np.int16))
+        print(f"💾 Saved: {save_path}")
         return True
     except Exception as e:
         print(f"Local TTS Failed: {e}")
@@ -151,7 +173,19 @@ def speak_cloud(text):
             voice_id=VOICE_ID,
             model_id=MODEL_ID
         )
-        play(audio)
+
+        # Save audio to Downloads folder
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        save_path = DOWNLOADS_DIR / f"tts_elevenlabs_{timestamp}.mp3"
+        audio_bytes = b"".join(audio)
+        save_path.write_bytes(audio_bytes)
+        print(f"💾 Saved: {save_path}")
+
+        # Play the saved file
+        from pydub import AudioSegment
+        from pydub.playback import play as pydub_play
+        audio_segment = AudioSegment.from_file(str(save_path), format="mp3")
+        pydub_play(audio_segment)
         return True
     except Exception as e:
         print(f"ElevenLabs TTS Failed: {e}")
@@ -235,6 +269,14 @@ if __name__ == "__main__":
         print("See 6_Semblance/TROUBLESHOOTING.md for detailed solutions")
     finally:
         print("\n" + "-" * 60)
-        input("Press Enter to close...")
+        print("Press Enter to close (auto-closes in 5 minutes)...")
+        # Auto-close after 5 minutes using a daemon timer
+        timer = threading.Timer(300, lambda: os._exit(0))
+        timer.daemon = True
+        timer.start()
+        try:
+            input()
+        except EOFError:
+            time.sleep(300)
         sys.exit(0)
 

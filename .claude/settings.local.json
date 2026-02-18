@@ -20,7 +20,8 @@
       "Bash(findstr:*)",
       "WebFetch(domain:docs.x.ai)",
       "WebFetch(domain:fal.ai)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(tasklist)"
     ],
     "deny": [],
     "ask": []

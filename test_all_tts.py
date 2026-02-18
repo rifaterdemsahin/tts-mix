@@ -1,5 +1,5 @@
 """
-Test All TTS Engines - Groq, ElevenLabs, and Kokoro
+Test All TTS Engines - fal.ai, ElevenLabs, and Kokoro
 Tests each engine individually with "Hello World" message.
 """
 
@@ -18,9 +18,7 @@ except ImportError:
     print("Warning: python-dotenv not installed")
 
 # Load configuration
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_VOICE = os.getenv("GROQ_VOICE", "troy")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "canopylabs/orpheus-v1-english")
+FAL_KEY = os.getenv("FAL_KEY", "")
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 VOICE_ID = os.getenv("VOICE_ID", "JBFqnCBsd6RMkjVDRZzb")
@@ -28,69 +26,94 @@ MODEL_ID = os.getenv("MODEL_ID", "eleven_flash_v2_5")
 
 TEST_MESSAGE = "Hello World! This is a test of text to speech."
 
-def test_groq():
-    """Test Groq TTS"""
+def test_fal():
+    """Test fal.ai TTS"""
     print("\n" + "="*60)
-    print("TEST 1: GROQ TTS")
+    print("TEST 1: FAL.AI TTS")
     print("="*60)
     print(f"Testing: {TEST_MESSAGE}")
-    print(f"Voice: {GROQ_VOICE}")
-    print(f"Model: {GROQ_MODEL}")
+    print(f"Model: dia-tts")
     print("-"*60)
 
-    if not GROQ_API_KEY:
-        print("❌ SKIPPED: GROQ_API_KEY not configured in .env file")
-        print("   Get key from: https://console.groq.com/keys")
+    if not FAL_KEY:
+        print("❌ SKIPPED: FAL_KEY not configured in .env file")
+        print("   Get key from: https://fal.ai/dashboard/keys")
         return False
 
     try:
-        print("Loading Groq library...")
-        from groq import Groq
+        print("Loading fal.ai library...")
+        import fal_client
         import sounddevice as sd
         import numpy as np
         from io import BytesIO
         import wave
+        import httpx
 
-        print("✓ Groq library loaded")
-        print(f"✓ API Key configured: {GROQ_API_KEY[:10]}...")
+        print("✓ fal.ai library loaded")
+        print(f"✓ API Key configured: {FAL_KEY[:10]}...")
 
-        print("\nGenerating speech with Groq...")
-        client = Groq(api_key=GROQ_API_KEY)
+        # Set API key as environment variable
+        os.environ['FAL_KEY'] = FAL_KEY
 
-        response = client.audio.speech.create(
-            model=GROQ_MODEL,
-            voice=GROQ_VOICE,
-            input=TEST_MESSAGE
+        print("\nGenerating speech with fal.ai...")
+        result = fal_client.run(
+            "fal-ai/dia-tts",
+            arguments={
+                "text": TEST_MESSAGE
+            }
         )
 
         print("✓ Speech generated successfully")
-        print("Converting audio format...")
 
-        # Save to BytesIO buffer
-        audio_buffer = BytesIO()
-        for chunk in response.iter_bytes():
-            audio_buffer.write(chunk)
+        # Get audio URL from result
+        audio_url = result.get("audio", {}).get("url")
+        if not audio_url:
+            print("❌ No audio URL in response")
+            print(f"   Response keys: {list(result.keys())}")
+            return False
 
-        # Read WAV from buffer
-        audio_buffer.seek(0)
-        with wave.open(audio_buffer, 'rb') as wf:
-            sample_rate = wf.getframerate()
-            audio_data = np.frombuffer(wf.readframes(wf.getnframes()), dtype=np.int16)
+        print(f"✓ Audio URL received: {audio_url[:50]}...")
+        print("Downloading audio...")
 
-        print(f"✓ Audio ready: {len(audio_data)} samples at {sample_rate} Hz")
-        print("\n🔊 Playing audio from GROQ...")
+        # Download audio file
+        response = httpx.get(audio_url)
+        response.raise_for_status()
+
+        print(f"✓ Audio downloaded: {len(response.content)} bytes")
+        print("\n🔊 Playing audio from FAL.AI...")
         print("   Listen to your speakers!\n")
 
-        # Play audio
-        sd.play(audio_data, sample_rate)
-        sd.wait()
+        # Try to play audio (MP3 format from dia-tts)
+        audio_buffer = BytesIO(response.content)
+        audio_buffer.seek(0)
 
-        print("✅ GROQ TTS TEST PASSED")
-        print("   Voice quality: Fast inference, good clarity")
+        try:
+            # Try WAV first
+            with wave.open(audio_buffer, 'rb') as wf:
+                sample_rate = wf.getframerate()
+                audio_data = np.frombuffer(wf.readframes(wf.getnframes()), dtype=np.int16)
+            sd.play(audio_data, sample_rate)
+            sd.wait()
+        except wave.Error:
+            # Try MP3 with pydub
+            try:
+                from pydub import AudioSegment
+                from pydub.playback import play as pydub_play
+                audio_buffer.seek(0)
+                audio = AudioSegment.from_file(audio_buffer, format="mp3")
+                pydub_play(audio)
+            except ImportError:
+                print("⚠ pydub not available for MP3 playback")
+                print("   Install with: pip install pydub")
+                print("   Audio was generated successfully but couldn't play")
+                return False
+
+        print("✅ FAL.AI TTS TEST PASSED")
+        print("   Voice quality: Fast inference, high quality, natural")
         return True
 
     except Exception as e:
-        print(f"❌ GROQ TTS TEST FAILED")
+        print(f"❌ FAL.AI TTS TEST FAILED")
         print(f"   Error: {e}")
         return False
 
@@ -208,13 +231,13 @@ def main():
     print("   TTS ENGINE COMPARISON TEST")
     print("█"*60)
     print("\nThis script will test all 3 TTS engines:")
-    print("1. Groq (cloud, fast)")
+    print("1. fal.ai (cloud, fast & high quality)")
     print("2. ElevenLabs (cloud, high quality)")
     print("3. Kokoro (local, offline)")
     print("\nEach will speak: \"" + TEST_MESSAGE + "\"")
 
     results = {
-        "Groq": test_groq(),
+        "fal.ai": test_fal(),
         "ElevenLabs": test_elevenlabs(),
         "Kokoro": test_kokoro()
     }
@@ -246,7 +269,7 @@ def main():
     else:
         print("\n⚠ No TTS engines are working")
         print("\nNext steps:")
-        print("1. Get Groq API key: https://console.groq.com/keys")
+        print("1. Get fal.ai API key: https://fal.ai/dashboard/keys")
         print("2. Fix ElevenLabs payment: https://elevenlabs.io/usage")
         print("3. Or use Python 3.11/3.12 for Kokoro")
 

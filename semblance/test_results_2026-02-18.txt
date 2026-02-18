@@ -1,0 +1,82 @@
+C:\Python314\Lib\site-packages\elevenlabs\core\pydantic_utilities.py:13: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+  from pydantic.v1.datetime_parse import parse_date as parse_date
+
+████████████████████████████████████████████████████████████
+   TTS ENGINE COMPARISON TEST
+████████████████████████████████████████████████████████████
+
+This script will test all 3 TTS engines:
+1. fal.ai (cloud, fast & high quality)
+2. ElevenLabs (cloud, high quality)
+3. Kokoro (local, offline)
+
+Each will speak: "Hello World! This is a test of text to speech."
+
+============================================================
+TEST 1: FAL.AI TTS
+============================================================
+Testing: Hello World! This is a test of text to speech.
+Model: dia-tts
+------------------------------------------------------------
+Loading fal.ai library...
+✓ fal.ai library loaded
+✓ API Key configured: be93d3a7-e...
+
+Generating speech with fal.ai...
+✓ Speech generated successfully
+❌ No audio URL in response
+
+============================================================
+TEST 2: ELEVENLABS TTS
+============================================================
+Testing: Hello World! This is a test of text to speech.
+Voice ID: JBFqnCBsd6RMkjVDRZzb
+Model: eleven_flash_v2_5
+------------------------------------------------------------
+Loading ElevenLabs library...
+✓ ElevenLabs library loaded
+✓ API Key configured: sk_a5c37b9...
+
+Generating speech with ElevenLabs...
+✓ Speech generated successfully
+
+🔊 Playing audio from ELEVENLABS...
+   Listen to your speakers!
+
+❌ ELEVENLABS TTS TEST FAILED
+   Error: headers: {'date': 'Wed, 18 Feb 2026 15:42:23 GMT', 'server': 'uvicorn', 'content-length': '150', 'content-type': 'application/json', 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST, PATCH, OPTIONS, DELETE, GET, PUT', 'access-control-max-age': '600', 'strict-transport-security': 'max-age=1800;', 'x-trace-id': '87bc98f972de8dd9dddfec327b35f4c6', 'x-region': 'europe-west4', 'via': '1.1 google', 'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000'}, status_code: 401, body: {'detail': {'status': 'payment_issue', 'message': 'Your subscription has a failed or incomplete payment. Complete the latest invoice to continue usage.'}}
+   Issue: Subscription payment required
+   Fix: Complete payment at https://elevenlabs.io/usage
+
+============================================================
+TEST 3: KOKORO TTS (Local)
+============================================================
+Testing: Hello World! This is a test of text to speech.
+Voice: af_bella (American Female)
+Language: American English
+------------------------------------------------------------
+Loading Kokoro library...
+❌ KOKORO TTS TEST FAILED
+   Error: unable to infer type for attribute "REGEX"...
+   Issue: Python 3.14 incompatibility (Pydantic v1)
+   Fix: Use Python 3.11 or 3.12
+
+============================================================
+TEST SUMMARY
+============================================================
+fal.ai          ❌ FAILED
+ElevenLabs      ❌ FAILED
+Kokoro          ❌ FAILED
+------------------------------------------------------------
+Results: 0/3 engines working
+============================================================
+
+⚠ No TTS engines are working
+
+Next steps:
+1. Get fal.ai API key: https://fal.ai/dashboard/keys
+2. Fix ElevenLabs payment: https://elevenlabs.io/usage
+3. Or use Python 3.11/3.12 for Kokoro
+
+See SETUP_SUMMARY.md for detailed setup instructions.
+

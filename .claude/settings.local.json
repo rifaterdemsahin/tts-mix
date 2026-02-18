@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(pip search:*)",
+      "Bash(espeak-ng:*)",
+      "Bash(winget search:*)",
+      "Bash(choco search:*)",
+      "Bash(winget install:*)",
+      "Bash(\"C:\\Program Files\\eSpeak NG\\espeak-ng.exe\" --version)",
+      "Bash(setx:*)",
+      "Bash(\"C:\\Program Files\\eSpeak NG\\espeak-ng.exe\" \"Hello World from espeak\")",
+      "Bash(clip)",
+      "WebSearch",
+      "Bash(findstr:*)",
+      "WebFetch(domain:docs.x.ai)",
+      "WebFetch(domain:fal.ai)",
+      "Bash(tee:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,7 +1,7 @@
 """
 TTS Application - Clipboard to Speech
-Reads text from clipboard and speaks it using Groq, ElevenLabs, or Kokoro.
-Priority: Groq first (fast), ElevenLabs second (quality), Kokoro fallback (local).
+Reads text from clipboard and speaks it using fal.ai, ElevenLabs, or Kokoro.
+Priority: fal.ai first (fast & quality), ElevenLabs second (quality), Kokoro fallback (local).
 
 Usage:
 1. Copy text to clipboard
@@ -23,49 +23,74 @@ except ImportError:
     print("Using environment variables or defaults...")
 
 # --- CONFIGURATION FROM .ENV ---
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_VOICE = os.getenv("GROQ_VOICE", "troy")  # troy, austin, etc.
-GROQ_MODEL = os.getenv("GROQ_MODEL", "canopylabs/orpheus-v1-english")
+FAL_KEY = os.getenv("FAL_KEY", "")
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 VOICE_ID = os.getenv("VOICE_ID", "JBFqnCBsd6RMkjVDRZzb")  # Default: Charlie
 MODEL_ID = os.getenv("MODEL_ID", "eleven_flash_v2_5")
 
-def speak_groq(text):
+def speak_fal(text):
     """
-    Use Groq cloud TTS to speak the text (fast and free).
+    Use fal.ai cloud TTS to speak the text (fast and high quality).
     Returns True on success, False on failure.
     """
     try:
-        from groq import Groq
+        import fal_client
         import sounddevice as sd
         import numpy as np
         from io import BytesIO
         import wave
+        import httpx
 
-        if not GROQ_API_KEY:
-            print("Groq API key not set, skipping...")
+        if not FAL_KEY:
+            print("fal.ai API key not set, skipping...")
             return False
 
-        client = Groq(api_key=GROQ_API_KEY)
+        # Set API key as environment variable (fal_client reads from FAL_KEY)
+        os.environ['FAL_KEY'] = FAL_KEY
 
-        # Generate TTS audio
-        response = client.audio.speech.create(
-            model=GROQ_MODEL,
-            voice=GROQ_VOICE,
-            input=text
+        # Generate TTS audio using dia-tts model
+        result = fal_client.run(
+            "fal-ai/dia-tts",
+            arguments={
+                "text": text
+            }
         )
 
-        # Save to BytesIO buffer
-        audio_buffer = BytesIO()
-        for chunk in response.iter_bytes():
-            audio_buffer.write(chunk)
+        # Get audio URL from result
+        audio_url = result.get("audio", {}).get("url")
+        if not audio_url:
+            print("No audio URL in response")
+            return False
 
-        # Read WAV from buffer
+        # Download audio file
+        response = httpx.get(audio_url)
+        response.raise_for_status()
+
+        # Load audio from bytes
+        audio_buffer = BytesIO(response.content)
         audio_buffer.seek(0)
-        with wave.open(audio_buffer, 'rb') as wf:
-            sample_rate = wf.getframerate()
-            audio_data = np.frombuffer(wf.readframes(wf.getnframes()), dtype=np.int16)
+
+        # Read audio file (likely MP3 from dia-tts)
+        # Try different audio formats
+        try:
+            with wave.open(audio_buffer, 'rb') as wf:
+                sample_rate = wf.getframerate()
+                audio_data = np.frombuffer(wf.readframes(wf.getnframes()), dtype=np.int16)
+        except wave.Error:
+            # If not WAV, try using pydub for MP3
+            try:
+                from pydub import AudioSegment
+                from pydub.playback import play as pydub_play
+                audio_buffer.seek(0)
+                audio = AudioSegment.from_file(audio_buffer, format="mp3")
+                pydub_play(audio)
+                return True
+            except ImportError:
+                # If pydub not available, use mpg123 or similar
+                print("Audio playback requires pydub for MP3 files")
+                print("Install with: pip install pydub")
+                return False
 
         # Play audio
         sd.play(audio_data, sample_rate)
@@ -73,7 +98,7 @@ def speak_groq(text):
         return True
 
     except Exception as e:
-        print(f"Groq TTS Failed: {e}")
+        print(f"fal.ai TTS Failed: {e}")
         return False
 
 def speak_local(text):
@@ -126,7 +151,7 @@ def speak_cloud(text):
         return False
 
 def main():
-    """Main application logic - tries Groq first, then ElevenLabs, then Kokoro."""
+    """Main application logic - tries fal.ai first, then ElevenLabs, then Kokoro."""
     # Get text from clipboard
     content = pyperclip.paste().strip()
     if not content:
@@ -137,13 +162,13 @@ def main():
     preview = content[:100] + "..." if len(content) > 100 else content
     print(f"\nSpeaking: {preview}\n")
 
-    # Priority: 1. Groq (fast), 2. ElevenLabs (quality), 3. Kokoro (local)
+    # Priority: 1. fal.ai (fast & quality), 2. ElevenLabs (quality), 3. Kokoro (local)
     success = False
 
-    # Try Groq first
-    if GROQ_API_KEY:
-        print("Trying Groq TTS (fast and free)...")
-        success = speak_groq(content)
+    # Try fal.ai first
+    if FAL_KEY:
+        print("Trying fal.ai TTS (fast and high quality)...")
+        success = speak_fal(content)
 
     # Fallback to ElevenLabs
     if not success and ELEVENLABS_API_KEY:
@@ -157,7 +182,7 @@ def main():
 
     if not success:
         print("\nERROR: All TTS methods failed")
-        print("1. For Groq: Set GROQ_API_KEY in .env file")
+        print("1. For fal.ai: Set FAL_KEY in .env file")
         print("2. For ElevenLabs: Set ELEVENLABS_API_KEY in .env file")
         print("3. For Kokoro: Use Python 3.11/3.12 (not 3.14)")
         sys.exit(1)

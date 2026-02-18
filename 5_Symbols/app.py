@@ -201,11 +201,16 @@ def main():
 
     # Show what we're about to speak
     preview = content[:100] + "..." if len(content) > 100 else content
-    print(f"\nSpeaking: {preview}\n")
+    word_count = len(content.split())
+    char_count = len(content)
+    est_reading_min = word_count / 150  # ~150 words per minute for TTS
+    print(f"\nSpeaking: {preview}")
+    print(f"   📝 {word_count} words, {char_count} chars (~{est_reading_min:.1f} min estimated)\n")
 
     # Priority: 1. fal.ai (fast & quality), 2. ElevenLabs (quality), 3. Kokoro (local)
     success = False
-    start_time = time.time()
+    overall_start = time.time()
+    start_time = overall_start
 
     # Try fal.ai first
     if FAL_KEY:
@@ -255,7 +260,12 @@ def main():
         sys.exit(1)
 
     print("\n" + "=" * 60)
-    print("✅ Speech completed successfully!")
+    total_elapsed = time.time() - overall_start
+    mins, secs = divmod(total_elapsed, 60)
+    if mins >= 1:
+        print(f"✅ Speech completed successfully!  ⏱️ Total: {int(mins)}m {secs:.0f}s")
+    else:
+        print(f"✅ Speech completed successfully!  ⏱️ Total: {total_elapsed:.1f}s")
     print("=" * 60)
 
 if __name__ == "__main__":

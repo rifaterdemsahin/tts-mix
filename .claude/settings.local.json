@@ -21,7 +21,8 @@
       "WebFetch(domain:docs.x.ai)",
       "WebFetch(domain:fal.ai)",
       "Bash(tee:*)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

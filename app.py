@@ -105,7 +105,7 @@ def speak_cloud(text):
     """
     try:
         from elevenlabs.client import ElevenLabs
-        from elevenlabs import play
+        from elevenlabs.play import play
 
         if ELEVENLABS_API_KEY == "YOUR_API_KEY_HERE" or not ELEVENLABS_API_KEY:
             print("ERROR: ElevenLabs API key not set")

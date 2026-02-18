@@ -26,6 +26,7 @@ if (Test-Path $EnvFile) {
 }
 
 $XAI_API_KEY = $EnvVars["XAI_API_KEY"]
+$OPENROUTER_API_KEY = $EnvVars["OPENROUTER_API_KEY"]
 $ELEVENLABS_API_KEY = $EnvVars["ELEVENLABS_API_KEY"]
 $VOICE_ID = if ($EnvVars["VOICE_ID"]) { $EnvVars["VOICE_ID"] } else { "JBFqnCBsd6RMkjVDRZzb" }
 $MODEL_ID = if ($EnvVars["MODEL_ID"]) { $EnvVars["MODEL_ID"] } else { "eleven_flash_v2_5" }
@@ -193,6 +194,87 @@ try {
 catch {
     $GrokStart.Stop()
     Write-StatusFail "xAI API call failed: $($_.Exception.Message)"
+    Write-Host "     Trying OpenRouter fallback..." -ForegroundColor DarkYellow
+}
+
+# ─── STAGE 3b: Fallback to OpenRouter ─────────────────────
+if (-not $GrokAnswer -and $OPENROUTER_API_KEY) {
+    Write-Stage "🔄" "STAGE 3b — Fallback: OpenRouter" DarkYellow
+
+    $GrokStart = [System.Diagnostics.Stopwatch]::StartNew()
+
+    $ORBody = @{
+        model    = "google/gemini-2.0-flash-001"
+        messages = @(
+            @{ role = "system"; content = "You are a concise, insightful analyst. Keep responses brief (2-3 sentences max) and suitable for text-to-speech reading." }
+            @{ role = "user"; content = $Prompt }
+        )
+        temperature = 0.7
+        max_tokens  = 300
+    } | ConvertTo-Json -Depth 5
+
+    $ORHeaders = @{
+        "Authorization" = "Bearer $OPENROUTER_API_KEY"
+        "Content-Type"  = "application/json"
+    }
+
+    try {
+        Write-Host "     ⏳ Sending to OpenRouter..." -ForegroundColor DarkYellow
+        $Response = Invoke-RestMethod -Uri "https://openrouter.ai/api/v1/chat/completions" `
+                                      -Method Post `
+                                      -Headers $ORHeaders `
+                                      -Body $ORBody `
+                                      -TimeoutSec 30
+
+        $GrokAnswer = $Response.choices[0].message.content.Trim()
+        $GrokStart.Stop()
+        $GrokElapsed = $GrokStart.Elapsed
+
+        Write-Host ""
+        Write-Host "  ┌$('─' * 56)┐" -ForegroundColor DarkCyan
+        $Words = $GrokAnswer -split '\s+'
+        $Line = ""
+        $Lines = @()
+        foreach ($word in $Words) {
+            if (($Line + " " + $word).Trim().Length -gt 54) {
+                $Lines += $Line.Trim()
+                $Line = $word
+            } else {
+                $Line = ("$Line $word").Trim()
+            }
+        }
+        if ($Line) { $Lines += $Line.Trim() }
+        foreach ($l in $Lines | Select-Object -First 8) {
+            $padded = $l.PadRight(54).Substring(0, 54)
+            Write-Host "  │ " -ForegroundColor DarkCyan -NoNewline
+            Write-Host $padded -ForegroundColor Cyan -NoNewline
+            Write-Host " │" -ForegroundColor DarkCyan
+        }
+        Write-Host "  └$('─' * 56)┘" -ForegroundColor DarkCyan
+        Write-Detail "OpenRouter time:" "$($GrokElapsed.TotalSeconds.ToString('F1'))s" DarkYellow
+        Write-Detail "Tokens:" "$($Response.usage.total_tokens)" DarkYellow
+
+        # Save text to secondbrain
+        if (Test-Path $SecondBrainDir) {
+            $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+            $TextPath = Join-Path $SecondBrainDir "why_$Timestamp.md"
+            $TextContent = "# Why Is This Important?`n`n## Source`n`n$ClipboardText`n`n## Analysis (OpenRouter)`n`n$GrokAnswer`n"
+            [System.IO.File]::WriteAllText($TextPath, $TextContent, [System.Text.UTF8Encoding]::new($true))
+            Write-Detail "Saved text:" $TextPath DarkYellow
+        }
+
+        Write-StatusOk "OpenRouter answered"
+    }
+    catch {
+        $GrokStart.Stop()
+        Write-StatusFail "OpenRouter also failed: $($_.Exception.Message)"
+        Write-Host "`nPress Enter to close..." -ForegroundColor Red
+        Read-Host
+        exit 1
+    }
+}
+elseif (-not $GrokAnswer) {
+    Write-StatusFail "All LLM providers failed. No OPENROUTER_API_KEY set."
     Write-Host "`nPress Enter to close..." -ForegroundColor Red
     Read-Host
     exit 1

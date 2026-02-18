@@ -1,16 +1,32 @@
 """
-Example TTS Application
-This is a reference implementation showing proper imports and error handling.
+TTS Application - Clipboard to Speech
+Reads text from clipboard and speaks it using ElevenLabs (cloud) or Kokoro (local).
+Priority: ElevenLabs first for best quality, then fallback to local.
+
+Usage:
+1. Copy text to clipboard
+2. Run: python app.py
+3. Trigger from Stream Deck button for quick access
 """
 
-import pyperclip  # Common error point if not installed - see TROUBLESHOOTING.md
+import pyperclip
 import os
 import sys
+from pathlib import Path
 
-# --- CONFIGURATION ---
-ELEVENLABS_API_KEY = "YOUR_API_KEY_HERE"
-VOICE_ID = "JBFqnCBsd6RMkjVDRZzb"  # Default: Charlie
-USE_LOCAL_FIRST = True
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    print("Warning: python-dotenv not installed. Install with: pip install python-dotenv")
+    print("Using environment variables or defaults...")
+
+# --- CONFIGURATION FROM .ENV ---
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "YOUR_API_KEY_HERE")
+VOICE_ID = os.getenv("VOICE_ID", "JBFqnCBsd6RMkjVDRZzb")  # Default: Charlie
+MODEL_ID = os.getenv("MODEL_ID", "eleven_flash_v2_5")
+USE_CLOUD_FIRST = os.getenv("USE_CLOUD_FIRST", "true").lower() == "true"
 
 def speak_local(text):
     """
@@ -36,46 +52,68 @@ def speak_local(text):
 def speak_cloud(text):
     """
     Use ElevenLabs cloud TTS to speak the text.
+    Best quality, natural voice with emotions.
     Returns True on success, False on failure.
     """
     try:
         from elevenlabs.client import ElevenLabs
         from elevenlabs import play
-        
+
+        if ELEVENLABS_API_KEY == "YOUR_API_KEY_HERE" or not ELEVENLABS_API_KEY:
+            print("ERROR: ElevenLabs API key not set")
+            print("1. Copy .env.sample to .env")
+            print("2. Add your API key from https://elevenlabs.io/app/settings/api-keys")
+            return False
+
         client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
         audio = client.text_to_speech.convert(
             text=text,
             voice_id=VOICE_ID,
-            model_id="eleven_flash_v2_5"  # Low latency model
+            model_id=MODEL_ID
         )
         play(audio)
         return True
     except Exception as e:
-        print(f"Cloud TTS Failed: {e}")
+        print(f"ElevenLabs TTS Failed: {e}")
         return False
 
 def main():
-    """Main application logic."""
+    """Main application logic - prioritizes ElevenLabs for best quality."""
     # Get text from clipboard
     content = pyperclip.paste().strip()
     if not content:
-        print("Clipboard empty.")
+        print("Clipboard is empty. Copy some text and try again.")
         sys.exit(1)
 
-    print(f"Speaking: {content[:50]}...")
-    
-    # Try local first, then fallback to cloud
+    # Show what we're about to speak
+    preview = content[:100] + "..." if len(content) > 100 else content
+    print(f"\nSpeaking: {preview}\n")
+
+    # Try cloud first (ElevenLabs - best quality), then fallback to local
     success = False
-    if USE_LOCAL_FIRST:
+
+    if USE_CLOUD_FIRST:
+        print("Using ElevenLabs cloud TTS (natural voice with emotions)...")
+        success = speak_cloud(content)
+
+        if not success:
+            print("\nFalling back to local TTS (Kokoro)...")
+            success = speak_local(content)
+    else:
         print("Attempting local TTS (Kokoro)...")
         success = speak_local(content)
-    
+
+        if not success:
+            print("\nFalling back to ElevenLabs...")
+            success = speak_cloud(content)
+
     if not success:
-        print("Falling back to ElevenLabs...")
-        if ELEVENLABS_API_KEY == "YOUR_API_KEY_HERE":
-            print("ERROR: Please set your ElevenLabs API key in the script")
-            sys.exit(1)
-        speak_cloud(content)
+        print("\nERROR: All TTS methods failed")
+        print("1. For ElevenLabs: Set API key in .env file")
+        print("2. For Kokoro: Use Python 3.11/3.12 (not 3.14)")
+        sys.exit(1)
+
+    print("\n✓ Speech completed successfully!")
 
 if __name__ == "__main__":
     try:

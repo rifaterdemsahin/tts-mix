@@ -1,4 +1,4 @@
-# Storytell — xAI (Grok) + TTS Pipeline
+﻿# Storytell â€” xAI (Grok) + TTS Pipeline
 #
 # Pipeline:
 #   1. Read clipboard text
@@ -25,7 +25,7 @@ $PipelineConfig = @{
     Name         = "storytell"
     Title        = "Story"
     FilePrefix   = "story"
-    StageEmoji   = "📖"
+    StageEmoji   = "[book]"
     StageTitle   = "Asking xAI Grok: Tell a story about this"
     SystemPrompt = "You are a gifted storyteller. Transform any topic into a compelling short narrative (3-5 sentences) that sounds great when read aloud."
     UserPromptTemplate = $UserPrompt

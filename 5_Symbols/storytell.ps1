@@ -1,34 +1,15 @@
-# Sanity Check — xAI (Grok) + ElevenLabs TTS Pipeline
+# Storytell — xAI (Grok) + ElevenLabs TTS Pipeline
 #
 # Pipeline:
 #   1. Read clipboard text
-#   2. Send to xAI Grok API: "Does this make sense / is this sane?"
-#   3. Convert Grok's answer to speech via ElevenLabs
+#   2. Send to xAI Grok API: "Turn this into a short story"
+#   3. Convert Grok's story to speech via ElevenLabs
 #   4. Play audio
 #
 # Usage from Stream Deck:
 #   Action: System > Open
 #   App: powershell.exe
-#   Arguments: -ExecutionPolicy Bypass -File "C:\projects\tts-mix\5_Symbols\sanity-check.ps1"
-
-# ─── Global error trap: keep window open on ANY crash ────
-trap {
-    Write-Host "`n" -NoNewline
-    Write-Host ("=" * 60) -ForegroundColor Red
-    Write-Host "  ❌  UNEXPECTED ERROR" -ForegroundColor Red
-    Write-Host ("=" * 60) -ForegroundColor Red
-    Write-Host "  $($_.Exception.Message)" -ForegroundColor Yellow
-    Write-Host "  At: $($_.InvocationInfo.ScriptName):$($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "Press Enter to close..." -ForegroundColor Red
-    [Console]::ReadLine() | Out-Null
-    exit 1
-}
-
-$ErrorActionPreference = "Stop"
-$ScriptError = $null
-
-try {
+#   Arguments: -ExecutionPolicy Bypass -File "C:\projects\tts-mix\5_Symbols\storytell.ps1"
 
 # ─── Load .env ───────────────────────────────────────────
 # Force UTF-8 for all output and web requests
@@ -52,7 +33,6 @@ if (Test-Path $EnvFile) {
 $XAI_API_KEY = $EnvVars["XAI_API_KEY"]
 $OPENROUTER_API_KEY = $EnvVars["OPENROUTER_API_KEY"]
 $ELEVENLABS_API_KEY = $EnvVars["ELEVENLABS_API_KEY"]
-$FAL_KEY = $EnvVars["FAL_KEY"]
 $VOICE_ID = if ($EnvVars["VOICE_ID"]) { $EnvVars["VOICE_ID"] } else { "JBFqnCBsd6RMkjVDRZzb" }
 $MODEL_ID = if ($EnvVars["MODEL_ID"]) { $EnvVars["MODEL_ID"] } else { "eleven_flash_v2_5" }
 
@@ -175,7 +155,7 @@ Write-Detail "Model:" $MODEL_ID Magenta
 Write-StatusOk "API keys validated"
 
 # ─── STAGE 3: Ask xAI (Grok) ─────────────────────────────
-Write-Stage "🧠" "STAGE 3 — Asking xAI Grok: Sanity Check" Blue
+Write-Stage "📖" "STAGE 3 — Asking xAI Grok: Tell a story about this" Blue
 
 $GrokStart = [System.Diagnostics.Stopwatch]::StartNew()
 
@@ -186,17 +166,17 @@ The user copied this text:
 $ClipboardText
 ---
 
-Perform a sanity check on this. Does it make sense? Is the logic sound? Are there any obvious errors, contradictions, or red flags? Respond in 2-3 concise sentences. Be direct and honest. Respond in the same language as the text.
+Turn this into a short, vivid story in 3-5 sentences. Use narrative style with a beginning, middle, and end. Make it engaging and easy to listen to. Respond in the same language as the text.
 "@
 
 $Body = @{
     model    = "grok-3-mini-fast"
     messages = @(
-        @{ role = "system"; content = "You are a sharp, critical thinker performing sanity checks. Keep responses brief (2-3 sentences max) and suitable for text-to-speech reading." }
+        @{ role = "system"; content = "You are a gifted storyteller. Transform any topic into a compelling short narrative (3-5 sentences) that sounds great when read aloud." }
         @{ role = "user"; content = $Prompt }
     )
-    temperature = 0.5
-    max_tokens  = 300
+    temperature = 0.9
+    max_tokens  = 400
 } | ConvertTo-Json -Depth 5
 
 $Headers = @{
@@ -215,15 +195,15 @@ try {
     $GrokStart.Stop()
     $GrokElapsed = $GrokStart.Elapsed
 
-    Write-WrappedBox $GrokAnswer -BorderColor DarkCyan -TextColor Cyan
+    Write-WrappedBox $GrokAnswer -BorderColor DarkMagenta -TextColor Magenta
     Write-Detail "Grok time:" "$($GrokElapsed.TotalSeconds.ToString('F1'))s" Blue
     Write-Detail "Tokens:" "$($Response.usage.total_tokens)" Blue
 
     # Save text to secondbrain
     if (Test-Path $SecondBrainDir) {
         $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-        $TextPath = Join-Path $SecondBrainDir "sanity_$Timestamp.md"
-        $TextContent = "# Sanity Check`n`n## Source`n`n$ClipboardText`n`n## Analysis (Grok)`n`n$GrokAnswer`n"
+        $TextPath = Join-Path $SecondBrainDir "story_$Timestamp.md"
+        $TextContent = "# Story`n`n## Source`n`n$ClipboardText`n`n## Story (Grok)`n`n$GrokAnswer`n"
         [System.IO.File]::WriteAllText($TextPath, $TextContent, [System.Text.UTF8Encoding]::new($true))
         Write-Detail "📝 Obsidian:" $TextPath Blue
         $script:SavedFiles += $TextPath
@@ -246,11 +226,11 @@ if (-not $GrokAnswer -and $OPENROUTER_API_KEY) {
     $ORBody = @{
         model    = "google/gemini-2.0-flash-001"
         messages = @(
-            @{ role = "system"; content = "You are a sharp, critical thinker performing sanity checks. Keep responses brief (2-3 sentences max) and suitable for text-to-speech reading." }
+            @{ role = "system"; content = "You are a gifted storyteller. Transform any topic into a compelling short narrative (3-5 sentences) that sounds great when read aloud." }
             @{ role = "user"; content = $Prompt }
         )
-        temperature = 0.5
-        max_tokens  = 300
+        temperature = 0.9
+        max_tokens  = 400
     } | ConvertTo-Json -Depth 5
 
     $ORHeaders = @{
@@ -269,15 +249,15 @@ if (-not $GrokAnswer -and $OPENROUTER_API_KEY) {
         $GrokStart.Stop()
         $GrokElapsed = $GrokStart.Elapsed
 
-        Write-WrappedBox $GrokAnswer -BorderColor DarkCyan -TextColor Cyan
+        Write-WrappedBox $GrokAnswer -BorderColor DarkMagenta -TextColor Magenta
         Write-Detail "OpenRouter time:" "$($GrokElapsed.TotalSeconds.ToString('F1'))s" DarkYellow
         Write-Detail "Tokens:" "$($Response.usage.total_tokens)" DarkYellow
 
         # Save text to secondbrain
         if (Test-Path $SecondBrainDir) {
             $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-            $TextPath = Join-Path $SecondBrainDir "sanity_$Timestamp.md"
-            $TextContent = "# Sanity Check`n`n## Source`n`n$ClipboardText`n`n## Analysis (OpenRouter)`n`n$GrokAnswer`n"
+            $TextPath = Join-Path $SecondBrainDir "story_$Timestamp.md"
+            $TextContent = "# Story`n`n## Source`n`n$ClipboardText`n`n## Story (OpenRouter)`n`n$GrokAnswer`n"
             [System.IO.File]::WriteAllText($TextPath, $TextContent, [System.Text.UTF8Encoding]::new($true))
             Write-Detail "📝 Obsidian:" $TextPath DarkYellow
             $script:SavedFiles += $TextPath
@@ -300,119 +280,61 @@ elseif (-not $GrokAnswer) {
     exit 1
 }
 
-# ─── STAGE 4: Convert to Speech (ElevenLabs → fal.ai fallback) ─────────────
-Write-Stage "🔊" "STAGE 4 — Converting to Speech" Green
+# ─── STAGE 4: Convert to Speech (ElevenLabs) ─────────────
+Write-Stage "🔊" "STAGE 4 — Converting to Speech (ElevenLabs)" Green
 
-$TTSSuccess = $false
-$Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$SavePath = Join-Path $DownloadsDir "tts_sanity_$Timestamp.mp3"
+$TTSStart = [System.Diagnostics.Stopwatch]::StartNew()
 
-# ── 4a: Try ElevenLabs ──
-if ($ELEVENLABS_API_KEY) {
-    $TTSStart = [System.Diagnostics.Stopwatch]::StartNew()
+$TTSBody = @{
+    text     = $GrokAnswer
+    model_id = $MODEL_ID
+} | ConvertTo-Json
 
-    $TTSBody = @{
-        text     = $GrokAnswer
-        model_id = $MODEL_ID
-    } | ConvertTo-Json
-
-    $TTSHeaders = @{
-        "xi-api-key"   = $ELEVENLABS_API_KEY
-        "Content-Type" = "application/json"
-        "Accept"       = "audio/mpeg"
-    }
-
-    try {
-        Write-Host "     ⏳ Trying ElevenLabs..." -ForegroundColor DarkGreen
-
-        $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($TTSBody)
-        Invoke-WebRequest -Uri "https://api.elevenlabs.io/v1/text-to-speech/$VOICE_ID" `
-                          -Method Post `
-                          -Headers $TTSHeaders `
-                          -Body $bodyBytes `
-                          -OutFile $SavePath `
-                          -TimeoutSec 30 `
-                          -UseBasicParsing
-
-        $FileSize = (Get-Item $SavePath).Length
-        $TTSStart.Stop()
-        $TTSElapsed = $TTSStart.Elapsed
-
-        Write-Detail "Engine:" "ElevenLabs" Green
-        Write-Detail "Saved:" $SavePath Green
-        Write-Detail "Size:" "$([math]::Round($FileSize / 1024, 1)) KB" Green
-        Write-Detail "TTS time:" "$($TTSElapsed.TotalSeconds.ToString('F1'))s" Green
-        $TTSSuccess = $true
-    }
-    catch {
-        $TTSStart.Stop()
-        Write-StatusFail "ElevenLabs TTS failed: $($_.Exception.Message)"
-        # Clean up partial file
-        if (Test-Path $SavePath) { Remove-Item $SavePath -Force -ErrorAction SilentlyContinue }
-    }
+$TTSHeaders = @{
+    "xi-api-key"   = $ELEVENLABS_API_KEY
+    "Content-Type" = "application/json"
+    "Accept"       = "audio/mpeg"
 }
 
-# ── 4b: Fallback to fal.ai (dia-tts) ──
-if (-not $TTSSuccess -and $FAL_KEY) {
-    Write-Host "     🔄 Falling back to fal.ai..." -ForegroundColor DarkYellow
-    $TTSStart = [System.Diagnostics.Stopwatch]::StartNew()
+try {
+    Write-Host "     ⏳ Generating speech..." -ForegroundColor DarkGreen
+    $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $SavePath = Join-Path $DownloadsDir "tts_story_$Timestamp.mp3"
 
-    $FalBody = @{
-        text = $GrokAnswer
-    } | ConvertTo-Json
+    $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($TTSBody)
+    Invoke-WebRequest -Uri "https://api.elevenlabs.io/v1/text-to-speech/$VOICE_ID" `
+                      -Method Post `
+                      -Headers $TTSHeaders `
+                      -Body $bodyBytes `
+                      -OutFile $SavePath `
+                      -TimeoutSec 30 `
+                      -UseBasicParsing
 
-    $FalHeaders = @{
-        "Authorization" = "Key $FAL_KEY"
-        "Content-Type"  = "application/json"
+    $FileSize = (Get-Item $SavePath).Length
+    $TTSStart.Stop()
+    $TTSElapsed = $TTSStart.Elapsed
+
+    Write-Detail "Saved:" $SavePath Green
+    Write-Detail "Size:" "$([math]::Round($FileSize / 1024, 1)) KB" Green
+    Write-Detail "TTS time:" "$($TTSElapsed.TotalSeconds.ToString('F1'))s" Green
+
+    # Copy audio to secondbrain
+    if (Test-Path $SecondBrainDir) {
+        $SBSavePath = Join-Path $SecondBrainDir "story_$Timestamp.mp3"
+        Copy-Item -Path $SavePath -Destination $SBSavePath -Force
+        Write-Detail "📝 Obsidian:" $SBSavePath Green
+        $script:SavedFiles += $SBSavePath
     }
 
-    try {
-        Write-Host "     ⏳ Generating speech via fal.ai..." -ForegroundColor DarkGreen
-        $FalResponse = Invoke-Utf8RestMethod -Uri "https://fal.run/fal-ai/dia-tts" `
-                                             -Headers $FalHeaders `
-                                             -Body $FalBody `
-                                             -TimeoutSec 60
-
-        $AudioUrl = $FalResponse.audio.url
-        if (-not $AudioUrl) {
-            throw "No audio URL in fal.ai response"
-        }
-
-        # Download the audio file
-        Invoke-WebRequest -Uri $AudioUrl -OutFile $SavePath -TimeoutSec 30 -UseBasicParsing
-
-        $FileSize = (Get-Item $SavePath).Length
-        $TTSStart.Stop()
-        $TTSElapsed = $TTSStart.Elapsed
-
-        Write-Detail "Engine:" "fal.ai (dia-tts)" Green
-        Write-Detail "Saved:" $SavePath Green
-        Write-Detail "Size:" "$([math]::Round($FileSize / 1024, 1)) KB" Green
-        Write-Detail "TTS time:" "$($TTSElapsed.TotalSeconds.ToString('F1'))s" Green
-        $TTSSuccess = $true
-    }
-    catch {
-        $TTSStart.Stop()
-        Write-StatusFail "fal.ai TTS failed: $($_.Exception.Message)"
-    }
+    Write-StatusOk "Audio generated"
 }
-
-if (-not $TTSSuccess) {
-    Write-StatusFail "All TTS engines failed. No audio generated."
+catch {
+    $TTSStart.Stop()
+    Write-StatusFail "ElevenLabs TTS failed: $($_.Exception.Message)"
     Write-Host "`nPress Enter to close..." -ForegroundColor Red
     Read-Host
     exit 1
 }
-
-# Copy audio to secondbrain
-if (Test-Path $SecondBrainDir) {
-    $SBSavePath = Join-Path $SecondBrainDir "sanity_$Timestamp.mp3"
-    Copy-Item -Path $SavePath -Destination $SBSavePath -Force
-    Write-Detail "📝 Obsidian:" $SBSavePath Green
-    $script:SavedFiles += $SBSavePath
-}
-
-Write-StatusOk "Audio generated"
 
 # ─── STAGE 5: Play Audio ─────────────────────────────────
 Write-Stage "▶️" "STAGE 5 — Playing Audio" Yellow
@@ -468,17 +390,3 @@ Write-Host "  [TOTAL: $($TotalElapsed.TotalSeconds.ToString('F1'))s]" -Foregroun
 Write-Host ""
 Write-Host "Press Enter to close..." -ForegroundColor DarkGray
 Read-Host
-
-}
-catch {
-    Write-Host ""
-    Write-Host ("=" * 60) -ForegroundColor Red
-    Write-Host "  ❌  ERROR" -ForegroundColor Red
-    Write-Host ("=" * 60) -ForegroundColor Red
-    Write-Host "  $($_.Exception.Message)" -ForegroundColor Yellow
-    Write-Host "  At line $($_.InvocationInfo.ScriptLineNumber): $($_.InvocationInfo.Line.Trim())" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "Press Enter to close..." -ForegroundColor Red
-    [Console]::ReadLine() | Out-Null
-    exit 1
-}

@@ -9,8 +9,22 @@
 #   App: powershell.exe
 #   Arguments: -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\projects\tts-mix\5_Symbols\read-clipboard.ps1"
 
-# Change to script directory
+# ─── Logging Setup ────────────────────────────────────────
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ProjectRoot = Split-Path -Parent $ScriptDir
+$LogDir = Join-Path $ProjectRoot "7_Testing_known\logs"
+if (-not (Test-Path $LogDir)) { New-Item -Path $LogDir -ItemType Directory -Force | Out-Null }
+$LogFile = Join-Path $LogDir "read-clipboard_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+
+function Write-Log {
+    param([string]$Message, [string]$Level = "INFO")
+    $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
+    Add-Content -Path $LogFile -Value "[$ts] [$Level] $Message" -Encoding UTF8 -ErrorAction SilentlyContinue
+}
+
+Write-Log "read-clipboard.ps1 started"
+
+# Change to script directory
 Set-Location $ScriptDir
 
 # Get Python path (try common locations)
@@ -33,7 +47,7 @@ foreach ($path in $PythonPaths) {
 }
 
 if (-not $PythonExe) {
-    # Show error notification
+    Write-Log "Python not found" -Level "ERROR"
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.MessageBox]::Show(
         "Python not found. Please install Python or update the script with your Python path.",
@@ -48,7 +62,7 @@ if (-not $PythonExe) {
 $ClipboardText = Get-Clipboard -ErrorAction SilentlyContinue
 
 if (-not $ClipboardText) {
-    # Show notification - clipboard is empty
+    Write-Log "Clipboard is empty" -Level "WARN"
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.MessageBox]::Show(
         "Clipboard is empty. Please copy some text first.",
@@ -63,7 +77,7 @@ if (-not $ClipboardText) {
 $AppPath = Join-Path $ScriptDir "app.py"
 
 if (-not (Test-Path $AppPath)) {
-    # Show error notification
+    Write-Log "app.py not found at: $AppPath" -Level "ERROR"
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.MessageBox]::Show(
         "Could not find app.py at: $AppPath",
@@ -83,7 +97,7 @@ try {
 
     # Check exit code
     if ($LASTEXITCODE -ne 0) {
-        # Show error notification with elapsed time in red
+        Write-Log "TTS failed (exit code: $LASTEXITCODE) after $($Elapsed.TotalSeconds.ToString('F1'))s" -Level "ERROR"
         Write-Host "`n[TTS FAILED] Elapsed: $($Elapsed.ToString('mm\:ss\.ff'))" -ForegroundColor Red
         Add-Type -AssemblyName System.Windows.Forms
         [System.Windows.Forms.MessageBox]::Show(
@@ -93,14 +107,14 @@ try {
             [System.Windows.Forms.MessageBoxIcon]::Warning
         )
     } else {
-        # Show elapsed time in red
+        Write-Log "TTS completed in $($Elapsed.TotalSeconds.ToString('F1'))s"
         Write-Host "`n[TTS COMPLETE] Elapsed: $($Elapsed.ToString('mm\:ss\.ff'))" -ForegroundColor Red
     }
 }
 catch {
     $Stopwatch.Stop()
     $Elapsed = $Stopwatch.Elapsed
-    # Show error notification with exception details and elapsed time
+    Write-Log "TTS exception: $($_.Exception.Message) after $($Elapsed.TotalSeconds.ToString('F1'))s" -Level "ERROR"
     Write-Host "`n[TTS ERROR] Elapsed: $($Elapsed.ToString('mm\:ss\.ff'))" -ForegroundColor Red
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.MessageBox]::Show(

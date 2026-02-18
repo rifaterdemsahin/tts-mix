@@ -10,8 +10,22 @@
 #   App: powershell.exe
 #   Arguments: -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\projects\tts-mix\5_Symbols\read-clipboard-silent.ps1"
 
-# Change to script directory
+# ─── Logging Setup ────────────────────────────────────────
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ProjectRoot = Split-Path -Parent $ScriptDir
+$LogDir = Join-Path $ProjectRoot "7_Testing_known\logs"
+if (-not (Test-Path $LogDir)) { New-Item -Path $LogDir -ItemType Directory -Force | Out-Null }
+$LogFile = Join-Path $LogDir "read-clipboard-silent_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+
+function Write-Log {
+    param([string]$Message, [string]$Level = "INFO")
+    $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
+    Add-Content -Path $LogFile -Value "[$ts] [$Level] $Message" -Encoding UTF8 -ErrorAction SilentlyContinue
+}
+
+Write-Log "read-clipboard-silent.ps1 started"
+
+# Change to script directory
 Set-Location $ScriptDir
 
 # Get Python path (try common locations)
@@ -35,6 +49,7 @@ foreach ($path in $PythonPaths) {
 
 # Exit silently if Python not found
 if (-not $PythonExe) {
+    Write-Log "Python not found" -Level "ERROR"
     exit 1
 }
 
@@ -43,6 +58,7 @@ $ClipboardText = Get-Clipboard -ErrorAction SilentlyContinue
 
 # Exit silently if clipboard is empty
 if (-not $ClipboardText) {
+    Write-Log "Clipboard is empty" -Level "WARN"
     exit 0
 }
 
@@ -51,6 +67,7 @@ $AppPath = Join-Path $ScriptDir "app.py"
 
 # Exit silently if app not found
 if (-not (Test-Path $AppPath)) {
+    Write-Log "app.py not found at: $AppPath" -Level "ERROR"
     exit 1
 }
 
@@ -64,6 +81,7 @@ try {
                   -Wait
     $Stopwatch.Stop()
     $Elapsed = $Stopwatch.Elapsed
+    Write-Log "TTS completed in $($Elapsed.TotalSeconds.ToString('F1'))s"
 
     # Log elapsed time (red text if running in a visible console)
     Write-Host "`n[TTS COMPLETE] Elapsed: $($Elapsed.ToString('mm\:ss\.ff'))" -ForegroundColor Red
@@ -71,6 +89,7 @@ try {
 catch {
     $Stopwatch.Stop()
     $Elapsed = $Stopwatch.Elapsed
+    Write-Log "TTS exception: $($_.Exception.Message) after $($Elapsed.TotalSeconds.ToString('F1'))s" -Level "ERROR"
     Write-Host "`n[TTS ERROR] Elapsed: $($Elapsed.ToString('mm\:ss\.ff'))" -ForegroundColor Red
     exit 1
 }

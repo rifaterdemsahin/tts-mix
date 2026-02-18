@@ -9,6 +9,12 @@ Usage:
 """
 
 import sys
+import os
+
+# Set UTF-8 encoding for Windows console
+if sys.platform == 'win32':
+    os.system('chcp 65001 >nul 2>&1')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 def test_imports():
     """Test if all required packages can be imported."""

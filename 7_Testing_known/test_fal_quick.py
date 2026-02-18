@@ -36,6 +36,11 @@ def test_fal_quick():
         print("✓ fal.ai library loaded")
         print(f"✓ API Key configured: {FAL_KEY[:10]}...")
 
+        # Calculate cost
+        char_count = len(TEST_MESSAGE)
+        cost = (char_count / 1000) * 0.04
+        print(f"💰 Estimated cost: ${cost:.4f} ({char_count} characters @ $0.04/1k)")
+
         # Set API key
         os.environ['FAL_KEY'] = FAL_KEY
 

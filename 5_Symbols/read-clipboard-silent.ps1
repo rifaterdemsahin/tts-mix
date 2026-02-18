@@ -7,7 +7,7 @@
 # Usage from Stream Deck:
 #   Action: System > Open
 #   App: powershell.exe
-#   Arguments: -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\projects\tts-mix\read-clipboard-silent.ps1"
+#   Arguments: -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\projects\tts-mix\5_Symbols\read-clipboard-silent.ps1"
 
 # Change to script directory
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -45,8 +45,8 @@ if (-not $ClipboardText) {
     exit 0
 }
 
-# Run the TTS application
-$AppPath = Join-Path $ScriptDir "5_Symbols\app.py"
+# Run the TTS application (app.py is in the same directory)
+$AppPath = Join-Path $ScriptDir "app.py"
 
 # Exit silently if app not found
 if (-not (Test-Path $AppPath)) {

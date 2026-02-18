@@ -12,6 +12,7 @@ Usage:
 import pyperclip
 import os
 import sys
+import time
 from pathlib import Path
 
 # Load environment variables from .env file
@@ -46,6 +47,11 @@ def speak_fal(text):
         if not FAL_KEY:
             print("fal.ai API key not set, skipping...")
             return False
+
+        # Calculate cost (fal.ai dia-tts: $0.04 per 1000 characters)
+        char_count = len(text)
+        cost = (char_count / 1000) * 0.04
+        print(f"💰 Cost: ${cost:.4f} ({char_count} characters @ $0.04/1k chars)")
 
         # Set API key as environment variable (fal_client reads from FAL_KEY)
         os.environ['FAL_KEY'] = FAL_KEY
@@ -165,40 +171,70 @@ def main():
 
     # Priority: 1. fal.ai (fast & quality), 2. ElevenLabs (quality), 3. Kokoro (local)
     success = False
+    start_time = time.time()
 
     # Try fal.ai first
     if FAL_KEY:
-        print("Trying fal.ai TTS (fast and high quality)...")
+        print("=" * 60)
+        print("🟡 STARTING TTS — fal.ai (dia-tts)")
+        print(f"   ⏱️  Started at {time.strftime('%H:%M:%S')}")
+        print("=" * 60)
         success = speak_fal(content)
+        if success:
+            elapsed = time.time() - start_time
+            print(f"\n🟢 SENT — Audio delivered in {elapsed:.1f}s")
 
     # Fallback to ElevenLabs
     if not success and ELEVENLABS_API_KEY:
-        print("\nTrying ElevenLabs TTS (natural voice with emotions)...")
+        start_time = time.time()
+        print("\n" + "=" * 60)
+        print("🟡 STARTING TTS — ElevenLabs")
+        print(f"   Voice: {VOICE_ID}")
+        print(f"   Model: {MODEL_ID}")
+        print(f"   ⏱️  Started at {time.strftime('%H:%M:%S')}")
+        print("=" * 60)
         success = speak_cloud(content)
+        if success:
+            elapsed = time.time() - start_time
+            print(f"\n🟢 SENT — Audio delivered in {elapsed:.1f}s")
 
     # Fallback to Kokoro
     if not success:
-        print("\nTrying local TTS (Kokoro)...")
+        start_time = time.time()
+        print("\n" + "=" * 60)
+        print("🟡 STARTING TTS — Kokoro (Local/Offline)")
+        print("   Voice: af_bella (American Female)")
+        print(f"   ⏱️  Started at {time.strftime('%H:%M:%S')}")
+        print("=" * 60)
         success = speak_local(content)
+        if success:
+            elapsed = time.time() - start_time
+            print(f"\n🟢 SENT — Audio delivered in {elapsed:.1f}s")
 
     if not success:
-        print("\nERROR: All TTS methods failed")
+        print("\n" + "=" * 60)
+        print("❌ ERROR: All TTS methods failed")
+        print("=" * 60)
         print("1. For fal.ai: Set FAL_KEY in .env file")
         print("2. For ElevenLabs: Set ELEVENLABS_API_KEY in .env file")
         print("3. For Kokoro: Use Python 3.11/3.12 (not 3.14)")
         sys.exit(1)
 
-    print("\n✓ Speech completed successfully!")
+    print("\n" + "=" * 60)
+    print("✅ Speech completed successfully!")
+    print("=" * 60)
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
         print("\nInterrupted by user")
-        sys.exit(0)
     except Exception as e:
         print(f"Unexpected error: {e}")
         print("\nRun 'python 7_Testing_known/test_setup.py' to diagnose your setup")
         print("See 6_Semblance/TROUBLESHOOTING.md for detailed solutions")
-        sys.exit(1)
+    finally:
+        print("\n" + "-" * 60)
+        input("Press Enter to close...")
+        sys.exit(0)
 

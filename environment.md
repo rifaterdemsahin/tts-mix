@@ -8,7 +8,7 @@ I think you mean **Kokoro TTS** (not "Cocoro") — an open-weight 82M parameter 
 
 ### Option 1: Portable (Easiest — No Python Required)
 
-The <a href="https://github.com/DrStr4Nge147/Kokoro-TTS-Portable">Kokoro-TTS-Portable</a> package is self-contained and works on any Windows PC.
+The [Kokoro-TTS-Portable](https://github.com/DrStr4Nge147/Kokoro-TTS-Portable) package is self-contained and works on any Windows PC.
 
 1. Download the release from the GitHub page
 2. Extract the zip
@@ -43,7 +43,7 @@ You also need these two model files in your working directory:
 - `kokoro-v1.0.onnx`
 - `voices-v1.0.bin`
 
-Both can be downloaded from <a href="https://huggingface.co/hexgrad/Kokoro-82M">Hugging Face (hexgrad/Kokoro-82M)</a>.
+Both can be downloaded from [Hugging Face (hexgrad/Kokoro-82M)](https://huggingface.co/hexgrad/Kokoro-82M).
 
 Then run:
 ```cmd
@@ -54,8 +54,8 @@ kokoro-tts "Hello world" -v af_heart -o output.wav
 
 ### Prerequisites (for Options 2 & 3)
 
-- Python 3.10+ — <a href="https://python.org">python.org</a>
-- Git — <a href="https://git-scm.com">git-scm.com</a>
+- Python 3.10+ — [python.org](https://python.org)
+- Git — [git-scm.com](https://git-scm.com)
 - (Optional) CUDA for GPU acceleration
 
 ---
@@ -64,8 +64,8 @@ kokoro-tts "Hello world" -v af_heart -o output.wav
 
 ### Sources
 
-- <a href="https://github.com/DrStr4Nge147/Kokoro-TTS-Portable">Kokoro-TTS-Portable (GitHub)</a>
-- <a href="https://github.com/PierrunoYT/Kokoro-TTS-Local">Kokoro-TTS-Local (GitHub)</a>
-- <a href="https://github.com/nazdridoy/kokoro-tts">Kokoro CLI Tool (GitHub)</a>
-- <a href="https://aleksandarhaber.com/kokoro-82m-install-and-run-locally-fast-small-and-free-text-to-speech-tts-ai-model-kokoro-82m/">Step-by-step tutorial (aleksandarhaber.com)</a>
-- <a href="https://sonusahani.com/blogs/kokoro-tts-webui-install-locally">WebUI install guide (sonusahani.com)</a>
+- [Kokoro-TTS-Portable (GitHub)](https://github.com/DrStr4Nge147/Kokoro-TTS-Portable)
+- [Kokoro-TTS-Local (GitHub)](https://github.com/PierrunoYT/Kokoro-TTS-Local)
+- [Kokoro CLI Tool (GitHub)](https://github.com/nazdridoy/kokoro-tts)
+- [Step-by-step tutorial (aleksandarhaber.com)](https://aleksandarhaber.com/kokoro-82m-install-and-run-locally-fast-small-and-free-text-to-speech-tts-ai-model-kokoro-82m/)
+- [WebUI install guide (sonusahani.com)](https://sonusahani.com/blogs/kokoro-tts-webui-install-locally)

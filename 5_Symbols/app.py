@@ -14,6 +14,7 @@ import os
 import sys
 import time
 import threading
+import textwrap
 from pathlib import Path
 from datetime import datetime
 
@@ -199,12 +200,15 @@ def main():
         print("Clipboard is empty. Copy some text and try again.")
         sys.exit(1)
 
-    # Show what we're about to speak
-    preview = content[:100] + "..." if len(content) > 100 else content
+    # Show what we're about to speak (word-wrapped)
     word_count = len(content.split())
     char_count = len(content)
     est_reading_min = word_count / 150  # ~150 words per minute for TTS
-    print(f"\nSpeaking: {preview}")
+    wrapped = textwrap.fill(content, width=56, max_lines=6, placeholder="...")
+    print(f"\n┌{'─' * 58}┐")
+    for line in wrapped.splitlines():
+        print(f"│ {line:<56} │")
+    print(f"└{'─' * 58}┘")
     print(f"   📝 {word_count} words, {char_count} chars (~{est_reading_min:.1f} min estimated)\n")
 
     # Priority: 1. fal.ai (fast & quality), 2. ElevenLabs (quality), 3. Kokoro (local)

@@ -122,6 +122,20 @@ $script:MODEL_ID = if ($script:EnvVars["MODEL_ID"]) { $script:EnvVars["MODEL_ID"
 $script:DownloadsDir   = [Environment]::GetFolderPath("UserProfile") + "\Downloads"
 $script:SecondBrainDir = "F:\secondbrain_v4\secondbrain"
 
+# Ensure SecondBrain directory exists (create if F: drive is accessible)
+if (-not (Test-Path $script:SecondBrainDir)) {
+    try {
+        if (Test-Path "F:\") {
+            New-Item -Path $script:SecondBrainDir -ItemType Directory -Force | Out-Null
+            Write-Host "  [OK]  Created SecondBrain directory: $($script:SecondBrainDir)" -ForegroundColor Green
+        } else {
+            Write-Host "  [WARN]  F: drive not available - SecondBrain saves will be skipped" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "  [WARN]  Cannot create SecondBrain dir: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+}
+
 # ============================================================
 #  UI HELPER FUNCTIONS (screen + log)
 # ============================================================
@@ -371,16 +385,25 @@ function Invoke-Stage3-AskLLM {
         Exit-WithError "All LLM providers failed. No OPENROUTER_API_KEY set."
     }
 
-    # Save text to SecondBrain
+    # Save text to SecondBrain (always attempt)
+    $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $prefix = $PipelineConfig.FilePrefix
     if (Test-Path $script:SecondBrainDir) {
-        $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-        $prefix = $PipelineConfig.FilePrefix
-        $TextPath = Join-Path $script:SecondBrainDir "${prefix}_$Timestamp.md"
-        $mdTitle = $PipelineConfig.Title
-        $TextContent = "# $mdTitle`n`n## Source`n`n$($script:ClipboardText)`n`n## Analysis ($($script:LLMProvider))`n`n$($script:LLMAnswer)`n"
-        [System.IO.File]::WriteAllText($TextPath, $TextContent, [System.Text.UTF8Encoding]::new($true))
-        Write-Detail "Obsidian:" $TextPath Blue
-        $script:SavedFiles += $TextPath
+        try {
+            $TextPath = Join-Path $script:SecondBrainDir "${prefix}_$Timestamp.md"
+            $mdTitle = $PipelineConfig.Title
+            $TextContent = "# $mdTitle`n`n## Source`n`n$($script:ClipboardText)`n`n## Analysis ($($script:LLMProvider))`n`n$($script:LLMAnswer)`n"
+            [System.IO.File]::WriteAllText($TextPath, $TextContent, [System.Text.UTF8Encoding]::new($true))
+            Write-Detail "Obsidian:" $TextPath Blue
+            Write-Log "SecondBrain text saved: $TextPath" -Level INFO
+            $script:SavedFiles += $TextPath
+        } catch {
+            Write-StatusWarn "SecondBrain text save failed: $($_.Exception.Message)"
+            Write-Log "SecondBrain text save failed: $($_.Exception.Message)" -Level ERROR
+        }
+    } else {
+        Write-StatusWarn "SecondBrain directory not found: $($script:SecondBrainDir) - text not saved to Obsidian"
+        Write-Log "SecondBrain directory missing, text not saved" -Level WARN
     }
 }
 
@@ -489,12 +512,21 @@ function Invoke-Stage4-TTS {
         Exit-WithError "All TTS engines failed. No audio generated."
     }
 
-    # Copy audio to SecondBrain
+    # Copy audio to SecondBrain (always attempt)
     if (Test-Path $script:SecondBrainDir) {
-        $SBSavePath = Join-Path $script:SecondBrainDir "${prefix}_$($script:AudioTimestamp).mp3"
-        Copy-Item -Path $script:AudioSavePath -Destination $SBSavePath -Force
-        Write-Detail "Obsidian:" $SBSavePath Green
-        $script:SavedFiles += $SBSavePath
+        try {
+            $SBSavePath = Join-Path $script:SecondBrainDir "${prefix}_$($script:AudioTimestamp).mp3"
+            Copy-Item -Path $script:AudioSavePath -Destination $SBSavePath -Force
+            Write-Detail "Obsidian:" $SBSavePath Green
+            Write-Log "SecondBrain audio saved: $SBSavePath" -Level INFO
+            $script:SavedFiles += $SBSavePath
+        } catch {
+            Write-StatusWarn "SecondBrain audio save failed: $($_.Exception.Message)"
+            Write-Log "SecondBrain audio save failed: $($_.Exception.Message)" -Level ERROR
+        }
+    } else {
+        Write-StatusWarn "SecondBrain directory not found: $($script:SecondBrainDir) - audio not saved to Obsidian"
+        Write-Log "SecondBrain directory missing, audio not saved" -Level WARN
     }
 
     Write-StatusOk "Audio generated"

@@ -15,11 +15,15 @@ import sys
 import time
 import threading
 import textwrap
+import shutil
 from pathlib import Path
 from datetime import datetime
 
 # Downloads folder for saving audio files
 DOWNLOADS_DIR = Path.home() / "Downloads"
+
+# SecondBrain (Obsidian) directory for saving copies
+SECONDBRAIN_DIR = Path("F:/secondbrain_v4/secondbrain")
 
 # Load environment variables from .env file
 try:
@@ -36,6 +40,55 @@ FAL_KEY = os.getenv("FAL_KEY", "")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 VOICE_ID = os.getenv("VOICE_ID", "JBFqnCBsd6RMkjVDRZzb")  # Default: Charlie
 MODEL_ID = os.getenv("MODEL_ID", "eleven_flash_v2_5")
+
+# ─── SecondBrain Helper ───────────────────────────────────
+def ensure_secondbrain_dir():
+    """Ensure SecondBrain directory exists, create if F: drive accessible."""
+    if SECONDBRAIN_DIR.exists():
+        return True
+    try:
+        if Path("F:/").exists():
+            SECONDBRAIN_DIR.mkdir(parents=True, exist_ok=True)
+            print(f"  [OK]  Created SecondBrain directory: {SECONDBRAIN_DIR}")
+            return True
+        else:
+            print(f"  [WARN]  F: drive not available — SecondBrain saves will be skipped")
+            return False
+    except Exception as e:
+        print(f"  [WARN]  Cannot create SecondBrain dir: {e}")
+        return False
+
+def save_to_secondbrain_text(clipboard_text, prefix="readclip"):
+    """Save clipboard text as markdown to SecondBrain."""
+    if not ensure_secondbrain_dir():
+        return None
+    try:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        text_path = SECONDBRAIN_DIR / f"{prefix}_{timestamp}.md"
+        content = f"# Read Clipboard\n\n## Source\n\n{clipboard_text}\n"
+        text_path.write_text(content, encoding="utf-8")
+        print(f"  \U0001f4dd Obsidian text: {text_path}")
+        return text_path
+    except Exception as e:
+        print(f"  [WARN]  SecondBrain text save failed: {e}")
+        return None
+
+def save_to_secondbrain_audio(audio_path, prefix="readclip"):
+    """Copy audio file to SecondBrain."""
+    if not ensure_secondbrain_dir():
+        return None
+    try:
+        audio_src = Path(audio_path)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        ext = audio_src.suffix
+        sb_path = SECONDBRAIN_DIR / f"{prefix}_{timestamp}{ext}"
+        shutil.copy2(str(audio_src), str(sb_path))
+        print(f"  \U0001f3b5 Obsidian audio: {sb_path}")
+        return sb_path
+    except Exception as e:
+        print(f"  [WARN]  SecondBrain audio save failed: {e}")
+        return None
+
 
 def speak_fal(text):
     """
@@ -85,6 +138,9 @@ def speak_fal(text):
         save_path = DOWNLOADS_DIR / f"tts_fal_{timestamp}.mp3"
         save_path.write_bytes(response.content)
         print(f"💾 Saved: {save_path}")
+
+        # Save to SecondBrain
+        save_to_secondbrain_audio(save_path, prefix="readclip_fal")
 
         # Load audio from bytes
         audio_buffer = BytesIO(response.content)
@@ -147,6 +203,9 @@ def speak_local(text):
         combined = np.concatenate(all_audio)
         wavfile.write(str(save_path), 24000, (combined * 32767).astype(np.int16))
         print(f"💾 Saved: {save_path}")
+
+        # Save to SecondBrain
+        save_to_secondbrain_audio(save_path, prefix="readclip_kokoro")
         return True
     except Exception as e:
         print(f"Local TTS Failed: {e}")
@@ -181,6 +240,9 @@ def speak_cloud(text):
         audio_bytes = b"".join(audio)
         save_path.write_bytes(audio_bytes)
         print(f"💾 Saved: {save_path}")
+
+        # Save to SecondBrain
+        save_to_secondbrain_audio(save_path, prefix="readclip_elevenlabs")
 
         # Play the saved file using Windows Media Player COM (no ffmpeg needed)
         import subprocess
@@ -218,6 +280,9 @@ def main():
         print(f"│ {line:<56} │")
     print(f"└{'─' * 58}┘")
     print(f"   📝 {word_count} words, {char_count} chars (~{est_reading_min:.1f} min estimated)\n")
+
+    # Save clipboard text to SecondBrain
+    save_to_secondbrain_text(content, prefix="readclip")
 
     # Priority: 1. ElevenLabs (quality), 2. fal.ai (fast), 3. Kokoro (local)
     success = False

@@ -71,6 +71,38 @@ if (-not (Test-Path $AppPath)) {
     exit 1
 }
 
+# ─── SecondBrain Save (clipboard text) ─────────────────────
+$SecondBrainDir = "F:\secondbrain_v4\secondbrain"
+
+# Ensure SecondBrain directory exists
+if (-not (Test-Path $SecondBrainDir)) {
+    try {
+        if (Test-Path "F:\") {
+            New-Item -Path $SecondBrainDir -ItemType Directory -Force | Out-Null
+            Write-Log "Created SecondBrain directory: $SecondBrainDir"
+        } else {
+            Write-Log "F: drive not available - SecondBrain saves skipped" -Level "WARN"
+        }
+    } catch {
+        Write-Log "Cannot create SecondBrain dir: $($_.Exception.Message)" -Level "WARN"
+    }
+}
+
+# Save clipboard text to SecondBrain as markdown
+if (Test-Path $SecondBrainDir) {
+    try {
+        $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+        $TextPath = Join-Path $SecondBrainDir "readclip_$Timestamp.md"
+        $TextContent = "# Read Clipboard`n`n## Source`n`n$($ClipboardText -join "`n")`n"
+        [System.IO.File]::WriteAllText($TextPath, $TextContent, [System.Text.UTF8Encoding]::new($true))
+        Write-Log "SecondBrain text saved: $TextPath"
+    } catch {
+        Write-Log "SecondBrain text save failed: $($_.Exception.Message)" -Level "ERROR"
+    }
+} else {
+    Write-Log "SecondBrain directory not found - text not saved" -Level "WARN"
+}
+
 # Execute Python script silently and track elapsed time
 $Stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 try {
@@ -82,6 +114,21 @@ try {
     $Stopwatch.Stop()
     $Elapsed = $Stopwatch.Elapsed
     Write-Log "TTS completed in $($Elapsed.TotalSeconds.ToString('F1'))s"
+
+    # Copy latest audio to SecondBrain
+    if (Test-Path $SecondBrainDir) {
+        try {
+            $LatestAudio = Get-ChildItem -Path ([Environment]::GetFolderPath("UserProfile") + "\Downloads") -Filter "tts_*" -File |
+                Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            if ($LatestAudio) {
+                $SBAudioPath = Join-Path $SecondBrainDir "readclip_$($LatestAudio.BaseName.Split('_')[-2])_$($LatestAudio.BaseName.Split('_')[-1])$($LatestAudio.Extension)"
+                Copy-Item -Path $LatestAudio.FullName -Destination $SBAudioPath -Force
+                Write-Log "SecondBrain audio saved: $SBAudioPath"
+            }
+        } catch {
+            Write-Log "SecondBrain audio copy failed: $($_.Exception.Message)" -Level "ERROR"
+        }
+    }
 
     # Log elapsed time (red text if running in a visible console)
     Write-Host "`n[TTS COMPLETE] Elapsed: $($Elapsed.ToString('mm\:ss\.ff'))" -ForegroundColor Red
